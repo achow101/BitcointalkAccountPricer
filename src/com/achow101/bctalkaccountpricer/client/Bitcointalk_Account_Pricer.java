@@ -19,11 +19,13 @@ package com.achow101.bctalkaccountpricer.client;
 import com.achow101.bctalkaccountpricer.shared.AccountPricer;
 import com.achow101.bctalkaccountpricer.shared.FieldVerifier;
 import com.google.gwt.core.client.EntryPoint;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
@@ -37,15 +39,15 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 	 * The message displayed to the user when the server cannot be reached or
 	 * returns an error.
 	 */
-	//private static final String SERVER_ERROR = "An error occurred while "
-	//		+ "attempting to contact the server. Please check your network "
-	//		+ "connection and try again.";
+	private static final String SERVER_ERROR = "An error occurred while "
+			+ "attempting to contact the server. Please check your network "
+			+ "connection and try again.";
 
 	/**
 	 * Create a remote service proxy to talk to the server-side Greeting service.
 	 */
-	//private final PricingServiceAsync greetingService = GWT
-	//		.create(PricingService.class);
+	private final PricingServiceAsync greetingService = GWT
+			.create(PricingService.class);
 
 	/**
 	 * This is the entry point method.
@@ -132,28 +134,41 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 				loadingLabel.setText("Loading... Please wait. This can take a few minutes.");
 				
 				// Get uid
-				int uid = Integer.parseInt(textToServer);
+				//int uid = Integer.parseInt(textToServer);
 				
 				// Get data from pricer
-				AccountPricer pricer = new AccountPricer(uid);
-				String[] result = pricer.getAccountData();
+				//AccountPricer pricer = new AccountPricer(uid);
+				//String[] result = pricer.getAccountData();
 
-				// Display data
+				// Get data from server
+				sendButton.setEnabled(false);
+				greetingService.pricingServer(textToServer,
+						new AsyncCallback<String[]>() {
+							public void onFailure(Throwable caught) {
+								// Show the RPC error message to the user
+								errorLabel.setText("Remote Procedure Call - Failure. Please try again");
+							}
+							
+							public void onSuccess(String[] result)
+							{
+								// Display data
+												
+								// Clear other messages
+								errorLabel.setText("");
+								loadingLabel.setText("");
 								
-				// Clear other messages
-				errorLabel.setText("");
-				loadingLabel.setText("");
-				
-				// Output results
-				uidLabel.setText(result[0]);
-				usernameLabel.setText(result[1]);
-				postsLabel.setText(result[2]);
-				activityLabel.setText(result[3]);
-				potActivityLabel.setText(result[4]);
-				postQualityLabel.setText(result[5]);
-				trustLabel.setText(result[6]);
-				priceLabel.setText(result[7]);
-				sendButton.setEnabled(true);
+								// Output results
+								uidLabel.setText(result[0]);
+								usernameLabel.setText(result[1]);
+								postsLabel.setText(result[2]);
+								activityLabel.setText(result[3]);
+								potActivityLabel.setText(result[4]);
+								postQualityLabel.setText(result[5]);
+								trustLabel.setText(result[6]);
+								priceLabel.setText(result[7]);
+								sendButton.setEnabled(true);
+							}
+						});
 			}
 		}
 
