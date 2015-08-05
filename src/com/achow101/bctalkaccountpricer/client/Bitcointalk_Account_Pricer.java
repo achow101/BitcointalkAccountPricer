@@ -35,6 +35,9 @@ import com.google.gwt.user.client.ui.TextBox;
  * Entry point classes define <code>onModuleLoad()</code>.
  */
 public class Bitcointalk_Account_Pricer implements EntryPoint {
+	
+	//TODO: Prior to running this code, please remember to change the password in AccountPricer.java for accountbot.
+	
 	/**
 	 * The message displayed to the user when the server cannot be reached or
 	 * returns an error.

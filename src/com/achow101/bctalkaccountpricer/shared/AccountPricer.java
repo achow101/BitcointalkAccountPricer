@@ -347,7 +347,7 @@ public class AccountPricer {
 		    final HtmlTextInput textField = form.getInputByName("user");
 		    textField.setValueAttribute("accountbot");
 		    final HtmlPasswordInput textField2 = form.getInputByName("passwrd");
-		    textField2.setValueAttribute("oP4^3!yC");
+		    textField2.setValueAttribute("NOT THE RIGHT PASSWORD");
 		    final HtmlPage postLoginPage = button.click();
 		    
 		    // Get profile page
