@@ -35,6 +35,10 @@ import com.gargoylesoftware.htmlunit.html.HtmlTextInput;
 
 public class AccountPricer {
 	
+	// TODO: Change password before compiling
+	final String ACCOUNT_NAME = "accountbot";
+	final String ACCOUNT_PASS = "NOT THE RIGHT PASSWORD";
+	
 	int userId = 3;
 	
 	public AccountPricer(int uid)
@@ -89,7 +93,6 @@ public class AccountPricer {
 			is.close();
 			
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
@@ -220,28 +223,16 @@ public class AccountPricer {
 		int trustScore = checkForTrust();
 		String trust = null;
 		
-		// Neg Trust
-		if(trustScore == -1)
+		switch(trustScore)
 		{
-			trust = "Negative, Red Trust";
-		}
-		
-		// Neutral Trust
-		else if(trustScore == 0)
-		{
-			trust = "Neutral";
-		}
-		
-		// Light Green trust
-		else if(trustScore == 1)
-		{
-			trust = "Positive, Light Green Trust";
-		}
-		
-		// Dark Green trust
-		else if(trustScore == 2)
-		{
-			trust = "Positive, Dark Green Trust";
+			case -1: trust = "Negative, Red Trust";
+				break;
+			case 0: trust = "Neutral";
+				break;
+			case 1: trust = "Positive, Light Green Trust";
+				break;
+			case 2: trust = "Positive, Dark Green Trust";
+				break;
 		}
 		
 		// Get price
@@ -304,28 +295,20 @@ public class AccountPricer {
 		}
 		
 		// Trust Multipliers		
-		// Neg Trust
-		if(trust == -1)
+		switch(trust)
 		{
-			price = price * 0.15;
-		}
-		
-		// Neutral Trust
-		if(trust == 0)
-		{
-			price = price * 1.00;
-		}
-		
-		// Light Green trust
-		if(trust == 1)
-		{
-			price = price * 1.10;
-		}
-		
-		// Dark Green trust
-		if(trust == 2)
-		{
-			price = price * 1.20;
+			// Neg trust
+			case -1: price = price * 0.15;
+				break;
+			// Neutral trust
+			case 0: price = price * 1.00;
+				break;
+			// positive light green
+			case 1: price = price * 1.10;
+				break;
+			//positive dark green
+			case 2: price = price * 1.20;
+				break;
 		}
 		
 		return price;
@@ -345,9 +328,9 @@ public class AccountPricer {
 			// login as accountbot
 		    final HtmlSubmitInput button = (HtmlSubmitInput) form.getInputsByValue("Login").get(0);
 		    final HtmlTextInput textField = form.getInputByName("user");
-		    textField.setValueAttribute("accountbot");
+		    textField.setValueAttribute(ACCOUNT_NAME);
 		    final HtmlPasswordInput textField2 = form.getInputByName("passwrd");
-		    textField2.setValueAttribute("NOT THE RIGHT PASSWORD");
+		    textField2.setValueAttribute(ACCOUNT_PASS);
 		    final HtmlPage postLoginPage = button.click();
 		    
 		    // Get profile page
