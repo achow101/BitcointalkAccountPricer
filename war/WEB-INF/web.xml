@@ -23,13 +23,13 @@
 
   <!-- Servlets -->
   <servlet>
-    <servlet-name>greetServlet</servlet-name>
+    <servlet-name>pricingServlet</servlet-name>
     <servlet-class>com.achow101.bctalkaccountpricer.server.PricingServiceImpl</servlet-class>
   </servlet>
   
   <servlet-mapping>
-    <servlet-name>greetServlet</servlet-name>
-    <url-pattern>/bitcointalk_account_pricer/greet</url-pattern>
+    <servlet-name>pricingServlet</servlet-name>
+    <url-pattern>/bitcointalk_account_pricer/pricing</url-pattern>
   </servlet-mapping>
   
   <!-- Default page to serve -->

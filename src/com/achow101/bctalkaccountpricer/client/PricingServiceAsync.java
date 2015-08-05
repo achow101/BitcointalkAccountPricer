@@ -19,7 +19,7 @@ package com.achow101.bctalkaccountpricer.client;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 /**
- * The async counterpart of <code>GreetingService</code>.
+ * The async counterpart of <code>PricingService</code>.
  */
 public interface PricingServiceAsync {
 	void pricingServer(String input, AsyncCallback<String[]> callback)

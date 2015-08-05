@@ -17,7 +17,6 @@
 package com.achow101.bctalkaccountpricer.server;
 
 import com.achow101.bctalkaccountpricer.client.PricingService;
-import com.achow101.bctalkaccountpricer.shared.AccountPricer;
 import com.achow101.bctalkaccountpricer.shared.FieldVerifier;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
