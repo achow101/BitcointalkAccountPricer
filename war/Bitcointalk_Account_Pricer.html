@@ -1,0 +1,102 @@
+<!---------------------------------------------------------------------------------
+# Copyright (C) 2015  Andrew Chow
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+# 
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#------------------------------------------------------------------------------->
+<!doctype html>
+<!-- The DOCTYPE declaration above will set the     -->
+<!-- browser's rendering engine into                -->
+<!-- "Standards Mode". Replacing this declaration   -->
+<!-- with a "Quirks Mode" doctype is not supported. -->
+
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+
+    <!--                                                               -->
+    <!-- Consider inlining CSS to reduce the number of requested files -->
+    <!--                                                               -->
+    <link type="text/css" rel="stylesheet" href="Bitcointalk_Account_Pricer.css">
+
+    <!--                                           -->
+    <!-- Any title is fine                         -->
+    <!--                                           -->
+    <title>Bitcointalk Account Price Estimator</title>
+    
+    <!--                                           -->
+    <!-- This script loads your compiled module.   -->
+    <!-- If you add any GWT meta tags, they must   -->
+    <!-- be added before this line.                -->
+    <!--                                           -->
+    <script type="text/javascript" language="javascript" src="bitcointalk_account_pricer/bitcointalk_account_pricer.nocache.js"></script>
+  </head>
+
+  <!--                                           -->
+  <!-- The body can have arbitrary html, or      -->
+  <!-- you can leave the body empty if you want  -->
+  <!-- to create a completely dynamic UI.        -->
+  <!--                                           -->
+  <body>
+
+    <!-- RECOMMENDED if your web app will not function without JavaScript enabled -->
+    <noscript>
+      <div style="width: 22em; position: absolute; left: 50%; margin-left: -11em; color: red; background-color: white; border: 1px solid red; padding: 4px; font-family: sans-serif">
+        Your web browser must have JavaScript enabled
+        in order for this application to display correctly.
+      </div>
+    </noscript>
+
+    <h1>Bitcointalk Account Price Estimator</h1>
+
+    <table align="center">
+      <tr>
+        <td colspan="2" style="font-weight:bold;">Please enter the User ID:</td>        
+      </tr>
+      <tr>
+        <td id="nameFieldContainer"></td>
+        <td id="sendButtonContainer"></td>
+      </tr>
+      <tr>
+        <td colspan="2" style="color:red;" id="errorLabelContainer"></td>
+      </tr>
+      <tr>
+      	<td colspan="2" id="loadingLabelContainer"></td>
+      </tr>
+      <tr>
+      	<td colspan="2" id="uidLabelContainer"></td>
+      </tr>
+      <tr>
+      	<td colspan="2" id="usernameLabelContainer"></td>
+      </tr>
+      <tr>
+      	<td colspan="2" id="postsLabelContainer"></td>
+      </tr>
+      <tr>
+      	<td colspan="2" id="activityLabelContainer"></td>
+      </tr>
+      <tr>
+      	<td colspan="2" id="potActivityLabelContainer"></td>
+      </tr>
+      <tr>
+      	<td colspan="2" id="postQualityLabelContainer"></td>
+      </tr>
+      <tr>
+      	<td colspan="2" id="trustLabelContainer"></td>
+      </tr>
+      <tr>
+      	<td colspan="2" id="priceLabelContainer"></td>
+      </tr>
+    </table>
+  </body>
+</html>
