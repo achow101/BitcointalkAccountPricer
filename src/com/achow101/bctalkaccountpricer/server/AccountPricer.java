@@ -106,7 +106,7 @@ public class AccountPricer {
 			pages++;
 		
 		// other vars
-		long[] dates = new long[posts + 1];
+		long[] dates = new long[posts];
 		int postcount = 0;
 		int goodPosts = 0;
 		
@@ -285,13 +285,13 @@ public class AccountPricer {
 		// Poor
 		else if(ratio >= 0.50)
 		{
-			price = price * -1.025;
+			price = price * 0.975;
 		}
 		
 		// Very Poor
 		else if(ratio < 0.50)
 		{
-			price = price * -1.05;
+			price = price * 0.95;
 		}
 		
 		// Trust Multipliers		

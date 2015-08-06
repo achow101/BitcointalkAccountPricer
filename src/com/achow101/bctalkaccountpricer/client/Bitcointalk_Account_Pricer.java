@@ -16,7 +16,6 @@
  ******************************************************************************/
 package com.achow101.bctalkaccountpricer.client;
 
-import com.achow101.bctalkaccountpricer.server.AccountPricer;
 import com.achow101.bctalkaccountpricer.shared.FieldVerifier;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
