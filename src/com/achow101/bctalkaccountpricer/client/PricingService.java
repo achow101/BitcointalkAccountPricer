@@ -16,6 +16,8 @@
  ******************************************************************************/
 package com.achow101.bctalkaccountpricer.client;
 
+import com.achow101.bctalkaccountpricer.shared.QueueRequest;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.rpc.RemoteService;
 import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 
@@ -24,5 +26,7 @@ import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
  */
 @RemoteServiceRelativePath("pricing")
 public interface PricingService extends RemoteService {
-	String[] pricingServer(String name) throws IllegalArgumentException;
+	String[] pricingServer(String name, QueueRequest request) throws IllegalArgumentException;
+	QueueRequest queueServer(QueueRequest request);
+	boolean removeRequest(QueueRequest request);
 }

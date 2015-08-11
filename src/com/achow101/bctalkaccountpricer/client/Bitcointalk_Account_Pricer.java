@@ -17,6 +17,7 @@
 package com.achow101.bctalkaccountpricer.client;
 
 import com.achow101.bctalkaccountpricer.shared.FieldVerifier;
+import com.achow101.bctalkaccountpricer.shared.QueueRequest;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -24,6 +25,10 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
+import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Label;
@@ -37,6 +42,9 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 	
 	//TODO: Prior to running this code, please remember to change the password in AccountPricer.java for accountbot.
 	
+	private boolean requestQueued = false;
+	private QueueRequest request;
+	
 	/**
 	 * The message displayed to the user when the server cannot be reached or
 	 * returns an error.
@@ -48,7 +56,7 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 	/**
 	 * Create a remote service proxy to talk to the server-side Greeting service.
 	 */
-	private final PricingServiceAsync greetingService = GWT
+	private final PricingServiceAsync pricingService = GWT
 			.create(PricingService.class);
 
 	/**
@@ -98,7 +106,9 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 			 * Fired when the user clicks on the sendButton.
 			 */
 			public void onClick(ClickEvent event) {
-				sendNameToServer();
+				
+				// Add request to queue
+				addToQueue();
 			}
 
 			/**
@@ -106,14 +116,14 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 			 */
 			public void onKeyUp(KeyUpEvent event) {
 				if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
-					sendNameToServer();
+					addToQueue();
 				}
 			}
+			
+			// Adds the request to server queue
+			private void addToQueue()
+			{
 
-			/**
-			 * Send the name from the nameField to the server and wait for a response.
-			 */
-			private void sendNameToServer() {
 				// Clear previous output
 				uidLabel.setText("");
 				usernameLabel.setText("");
@@ -123,6 +133,53 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 				postQualityLabel.setText("");
 				trustLabel.setText("");
 				priceLabel.setText("");
+				sendButton.setEnabled(false);
+				
+				// Create and add request
+				request = new QueueRequest();
+				requestQueued = true;
+				
+				// request ping loop
+				Timer elaspedTimer = new Timer()
+				{
+					public void run()
+					{
+						pricingService.queueServer(request, new AsyncCallback<QueueRequest>()
+								{
+
+									@Override
+									public void onFailure(Throwable caught) {
+										errorLabel.setText("Request Queuing failed. Please try again.");
+										sendButton.setEnabled(true);
+										requestQueued = false;
+										pricingService.removeRequest(request, null);
+										cancel();
+										
+									}
+
+									@Override
+									public void onSuccess(QueueRequest result) {
+										loadingLabel.setText("Please wait. You are number " + result.getQueuePos() + " in the queue.");
+										request = result;
+										if(result.getGo())
+										{
+											cancel();
+											sendNameToServer();
+										}
+										
+									}
+							
+								});							
+						}				
+					
+					};
+					elaspedTimer.scheduleRepeating(2000);
+			}
+
+			/**
+			 * Send the name from the nameField to the server and wait for a response.
+			 */
+			private void sendNameToServer() {
 				
 				// First, we validate the input.
 				errorLabel.setText("");
@@ -133,15 +190,18 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 				}
 				
 				// Loading message
-				loadingLabel.setText("Loading... Please wait. This can take a few minutes.");
+				loadingLabel.setText("Loading... Please wait. Your request is being processed.");
 
 				// Get data from server
-				sendButton.setEnabled(false);
-				greetingService.pricingServer(textToServer,
+				pricingService.pricingServer(textToServer, request,
 						new AsyncCallback<String[]>() {
 							public void onFailure(Throwable caught) {
 								// Show the RPC error message to the user
 								errorLabel.setText("Remote Procedure Call - Failure. Please try again");
+								loadingLabel.setText("");
+								sendButton.setEnabled(true);
+								requestQueued = false;
+								pricingService.removeRequest(request, null);
 							}
 							
 							public void onSuccess(String[] result)
@@ -162,6 +222,8 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 								trustLabel.setText(result[6]);
 								priceLabel.setText(result[7]);
 								sendButton.setEnabled(true);
+								requestQueued = false;
+								pricingService.removeRequest(request, null);
 							}
 						});
 			}
@@ -171,5 +233,25 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 		MyHandler handler = new MyHandler();
 		sendButton.addClickHandler(handler);
 		nameField.addKeyUpHandler(handler);
+		
+		Window.addWindowClosingHandler(new Window.ClosingHandler() {
+		      public void onWindowClosing(Window.ClosingEvent closingEvent) {
+		    	  if(requestQueued)
+		    	  {
+		    		  closingEvent.setMessage("Do you really want to leave the page? Your request is queued and leaving will remove it.");
+		    	  }
+		      }
+		    });
+		Window.addCloseHandler(new CloseHandler<Window>() {
+
+            @Override
+            public void onClose(CloseEvent<Window> event) {
+
+                if(requestQueued)
+                {
+                	pricingService.removeRequest(request, null);
+                }
+            }
+        });
 	}
 }

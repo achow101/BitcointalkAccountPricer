@@ -16,9 +16,14 @@
  ******************************************************************************/
 package com.achow101.bctalkaccountpricer.server;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.achow101.bctalkaccountpricer.client.PricingService;
 import com.achow101.bctalkaccountpricer.shared.FieldVerifier;
+import com.achow101.bctalkaccountpricer.shared.QueueRequest;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
+
 
 /**
  * The server-side implementation of the RPC service.
@@ -26,8 +31,10 @@ import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 @SuppressWarnings("serial")
 public class PricingServiceImpl extends RemoteServiceServlet implements
 		PricingService {
+	
+	public static List<QueueRequest> requestList = new ArrayList<QueueRequest>();
 
-	public String[] pricingServer(String input) throws IllegalArgumentException {
+	public String[] pricingServer(String input, QueueRequest request) throws IllegalArgumentException {
 		// Verify that the input is valid. 
 		if (!FieldVerifier.isValidName(input)) {
 			// If the input is not valid, throw an IllegalArgumentException back to
@@ -45,7 +52,13 @@ public class PricingServiceImpl extends RemoteServiceServlet implements
 		// Create pricer object
 		AccountPricer pricer = new AccountPricer(uid);
 		
-		return pricer.getAccountData();
+		// Create output array
+		String[] out = pricer.getAccountData();
+		
+		// Remove request from list
+		removeRequest(request);
+		
+		return out;
 	}
 
 	/**3
@@ -61,5 +74,60 @@ public class PricingServiceImpl extends RemoteServiceServlet implements
 		}
 		return html.replaceAll("&", "&amp;").replaceAll("<", "&lt;")
 				.replaceAll(">", "&gt;");
+	}
+
+	@Override
+	public QueueRequest queueServer(QueueRequest request)
+	{
+		if(request.isNew())
+		{
+			request.setIp(getThreadLocalRequest().getRemoteAddr());
+			request.setTime(System.currentTimeMillis() / 1000L);
+			request.setOldReq();
+			request.setGo(false);
+			requestList.add(request);
+		}
+		
+		if(request.getQueuePos() == 0 && requestList.indexOf(request) == 0)
+		{
+			request.setGo(true);
+		}
+		if(request.getQueuePos() == -1)
+		{
+			requestList.remove(request);
+		}
+		
+		for(QueueRequest req : requestList)
+		{
+			if(req.getQueuePos() == -1)
+			{
+				requestList.remove(req);
+			}
+			if(req.getQueuePos() == 0 && requestList.indexOf(req) == 0)
+			{
+				req.setGo(true);
+			}
+			req.setQueuePos(requestList.indexOf(req));
+			if(req.getIp().equals(request.getIp()) && req.getTime() == request.getTime())
+			{
+				request = req;
+			}
+			
+		}
+		return request;
+	}
+
+	@Override
+	public boolean removeRequest(QueueRequest request){
+		for(QueueRequest req : requestList)
+		{
+			if(req.getIp().equals(request.getIp()) && req.getTime() == request.getTime())
+			{
+				requestList.remove(req);
+				return true;
+			}
+			
+		}
+		return false;
 	}
 }
