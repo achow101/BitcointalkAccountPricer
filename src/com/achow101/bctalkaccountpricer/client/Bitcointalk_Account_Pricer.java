@@ -223,7 +223,6 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 								priceLabel.setText(result[7]);
 								sendButton.setEnabled(true);
 								requestQueued = false;
-								pricingService.removeRequest(request, null);
 							}
 						});
 			}
@@ -249,7 +248,20 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 
                 if(requestQueued)
                 {
-                	pricingService.removeRequest(request, null);
+                	pricingService.removeRequest(request, new AsyncCallback<Boolean>() {
+
+						@Override
+						public void onSuccess(Boolean result) {
+							// TODO Auto-generated method stub
+							
+						}
+
+						@Override
+						public void onFailure(Throwable caught) {
+							// TODO Auto-generated method stub
+							
+						}
+                	});
                 }
             }
         });
