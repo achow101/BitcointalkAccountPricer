@@ -33,6 +33,7 @@ public class PricingServiceImpl extends RemoteServiceServlet implements
 		PricingService {
 	
 	public static List<QueueRequest> requestList = new ArrayList<QueueRequest>();
+	public static List<QueueRequest> ipWait = new ArrayList<QueueRequest>();
 
 	public String[] pricingServer(String input, QueueRequest request) throws IllegalArgumentException {
 		// Verify that the input is valid. 
@@ -81,11 +82,23 @@ public class PricingServiceImpl extends RemoteServiceServlet implements
 	{
 		if(request.isNew())
 		{
+			// Set remaining fields
 			request.setIp(getThreadLocalRequest().getRemoteAddr());
 			request.setTime(System.currentTimeMillis() / 1000L);
+			
+			// Check if Ip needs to wait
+			for(QueueRequest req:ipWait)
+			{
+				if(req.getIp().equals(request.getIp()) && request.getTime() - req.getTime() <= 300)
+				{
+					return null;
+				}
+			}
+			
 			request.setOldReq();
 			request.setGo(false);
 			requestList.add(request);
+			ipWait.add(request);
 		}
 		
 		if(request.getQueuePos() == 0 && requestList.indexOf(request) == 0)
@@ -129,5 +142,16 @@ public class PricingServiceImpl extends RemoteServiceServlet implements
 			
 		}
 		return false;
+	}
+	
+	private void removeOldIPWaits()
+	{
+		for(QueueRequest req : ipWait)
+		{
+			if((System.currentTimeMillis() / 1000L) - req.getTime() >= 300)
+			{
+				ipWait.remove(req);
+			}
+		}
 	}
 }

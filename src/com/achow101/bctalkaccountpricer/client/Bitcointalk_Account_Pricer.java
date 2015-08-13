@@ -135,6 +135,12 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 				priceLabel.setText("");
 				sendButton.setEnabled(false);
 				
+				// validate input
+				if (!FieldVerifier.isValidName(nameField.getText())) {
+					errorLabel.setText("User ID must only be numbers");
+					return;
+				}
+				
 				// Create and add request
 				request = new QueueRequest();
 				requestQueued = true;
@@ -159,12 +165,25 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 
 									@Override
 									public void onSuccess(QueueRequest result) {
-										loadingLabel.setText("Please wait. You are number " + result.getQueuePos() + " in the queue.");
-										request = result;
-										if(result.getGo())
+										
+										// Check if ip needs to wait
+										if(result == null)
 										{
+											loadingLabel.setText("Please wait 5 minutes before requesting again.");
+											sendButton.setEnabled(true);
+											requestQueued = false;
 											cancel();
-											sendNameToServer();
+										}
+										
+										else
+										{
+											loadingLabel.setText("Please wait. You are number " + result.getQueuePos() + " in the queue.");
+											request = result;
+											if(result.getGo())
+											{
+												cancel();
+												sendNameToServer();
+											}
 										}
 										
 									}
@@ -233,6 +252,7 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 		sendButton.addClickHandler(handler);
 		nameField.addKeyUpHandler(handler);
 		
+		// Display leaving message if request is active
 		Window.addWindowClosingHandler(new Window.ClosingHandler() {
 		      public void onWindowClosing(Window.ClosingEvent closingEvent) {
 		    	  if(requestQueued)
@@ -241,6 +261,8 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 		    	  }
 		      }
 		    });
+		
+		// Remove request on close
 		Window.addCloseHandler(new CloseHandler<Window>() {
 
             @Override
