@@ -160,7 +160,7 @@ public class AccountPricer {
 				is.close();
 				
 				// wait so ip is not banned.
-				Thread.sleep(1000);
+				Thread.sleep(1500);
 				
 			} catch (Exception e) {
 				e.printStackTrace();

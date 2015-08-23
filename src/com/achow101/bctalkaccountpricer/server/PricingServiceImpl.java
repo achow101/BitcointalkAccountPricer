@@ -43,6 +43,8 @@ public class PricingServiceImpl extends RemoteServiceServlet implements
 			throw new IllegalArgumentException(
 					"User ID must only be numbers");
 		}
+		
+		System.out.println("Num Requests: " + requestList.size());
 
 		// Escape data from the client to avoid cross-site script vulnerabilities.
 		input = escapeHtml(input);
@@ -87,18 +89,28 @@ public class PricingServiceImpl extends RemoteServiceServlet implements
 			request.setTime(System.currentTimeMillis() / 1000L);
 			
 			// Check if Ip needs to wait
-			for(QueueRequest req:ipWait)
+			for(QueueRequest req : ipWait)
 			{
-				if(req.getIp().equals(request.getIp()) && request.getTime() - req.getTime() <= 300)
+				if(req.getIp().equals(request.getIp()) && request.getTime() - req.getTime() <= 600)
 				{
-					return null;
+					request.setQueuePos(-2);
+					return request;
+				}
+			}
+			
+			for(QueueRequest req : requestList)
+			{
+				// Check if ip already requested
+				if(req.getIp().equals(request.getIp()))
+				{
+					request.setQueuePos(-3);
+					return request;
 				}
 			}
 			
 			request.setOldReq();
 			request.setGo(false);
 			requestList.add(request);
-			ipWait.add(request);
 		}
 		
 		if(request.getQueuePos() == 0 && requestList.indexOf(request) == 0)
@@ -112,15 +124,23 @@ public class PricingServiceImpl extends RemoteServiceServlet implements
 		
 		for(QueueRequest req : requestList)
 		{
+			
+			// Remove -1 position requests
 			if(req.getQueuePos() == -1)
 			{
 				requestList.remove(req);
 			}
+			
+			// Set first request to go
 			if(req.getQueuePos() == 0 && requestList.indexOf(req) == 0)
 			{
 				req.setGo(true);
 			}
+			
+			// Set position of request to position in list
 			req.setQueuePos(requestList.indexOf(req));
+			
+			// Set request to return to match actual request in list
 			if(req.getIp().equals(request.getIp()) && req.getTime() == request.getTime())
 			{
 				request = req;
@@ -137,6 +157,8 @@ public class PricingServiceImpl extends RemoteServiceServlet implements
 			if(req.getIp().equals(request.getIp()) && req.getTime() == request.getTime())
 			{
 				requestList.remove(req);
+				request.setTime(System.currentTimeMillis() / 1000L);
+				ipWait.add(request);
 				return true;
 			}
 			

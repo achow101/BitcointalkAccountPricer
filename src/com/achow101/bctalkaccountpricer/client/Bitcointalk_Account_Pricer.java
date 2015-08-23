@@ -134,6 +134,9 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 				trustLabel.setText("");
 				priceLabel.setText("");
 				sendButton.setEnabled(false);
+				errorLabel.setText("");
+				loadingLabel.setText("");
+				
 				
 				// validate input
 				if (!FieldVerifier.isValidName(nameField.getText())) {
@@ -166,10 +169,17 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 									@Override
 									public void onSuccess(QueueRequest result) {
 										
-										// Check if ip needs to wait
-										if(result == null)
+										if(result.getQueuePos() == -3)
 										{
-											loadingLabel.setText("Please wait 5 minutes before requesting again.");
+											loadingLabel.setText("Please wait for your previous request to finish and try again");
+											sendButton.setEnabled(true);
+											requestQueued = false;
+											cancel();
+										}
+										
+										else if(result.getQueuePos() == -2)
+										{
+											loadingLabel.setText("Please wait 10 minutes before requesting again.");
 											sendButton.setEnabled(true);
 											requestQueued = false;
 											cancel();
