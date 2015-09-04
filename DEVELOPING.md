@@ -1,6 +1,6 @@
 #Developing
 This document provides instructions for properly setting up the workspace to develop and work on this application. It will
-assume that you are using Eclipse and have already set it up.
+assume that you are using Eclipse and have already set it up. It will also explain how to install on a web server.
 
 ## Setting up
 1. Install the Google Plugin for Eclipse. Instructions [here](https://developers.google.com/eclipse/docs/download)
@@ -18,3 +18,10 @@ assume that you are using Eclipse and have already set it up.
 ##Testing and Debugging from Ecplise
 1. Click the Debug button and select Super Dev Mode.
 2. Open up a browser and go to the URL that appears in the Development Mode tab at the bottom of Eclipse.
+
+##Installing on a server
+1. Install Apache tomcat.
+2. Compress the war folder into a zip file named BitcointalkAccountPricer. Change the file extension to ".war"
+ -OR-
+2. Copy the war folder to the webapps folder inside the Tomcat Home directory and rename it to BitcointalkAccountPricer.
+3. Start the Tomcat server. Everything should now be ready to go.
