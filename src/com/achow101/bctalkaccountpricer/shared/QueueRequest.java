@@ -9,6 +9,7 @@ public class QueueRequest implements Serializable{
 	private boolean newRequest = true;
 	private String ip;
 	private long time;
+	private String token;
 	
 	public boolean getGo()
 	{
@@ -58,5 +59,15 @@ public class QueueRequest implements Serializable{
 	public boolean isNew()
 	{
 		return newRequest;
+	}
+	
+	public void setToken(String token)
+	{
+		this.token = token;
+	}
+	
+	public String getToken()
+	{
+		return token;
 	}
 }
