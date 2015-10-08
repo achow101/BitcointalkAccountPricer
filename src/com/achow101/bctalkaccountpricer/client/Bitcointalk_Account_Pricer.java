@@ -16,6 +16,7 @@
  ******************************************************************************/
 package com.achow101.bctalkaccountpricer.client;
 
+import com.achow101.bctalkaccountpricer.shared.FieldVerifier;
 import com.achow101.bctalkaccountpricer.shared.QueueRequest;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
@@ -66,7 +67,7 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 		// Add Gui stuff		
 		final Button sendButton = new Button("Estimate Price");
 		final TextBox nameField = new TextBox();
-		nameField.setText("User ID/Token");
+		nameField.setText("User ID");
 		final Label errorLabel = new Label();
 		final Label uidLabel = new Label();
 		final Label usernameLabel = new Label();
@@ -135,6 +136,13 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 				sendButton.setEnabled(false);
 				errorLabel.setText("");
 				loadingLabel.setText("");
+				
+				
+				// validate input
+				if (!FieldVerifier.isValidName(nameField.getText())) {
+					errorLabel.setText("User ID must only be numbers");
+					return;
+				}
 				
 				// Create and add request
 				request = new QueueRequest();
@@ -205,6 +213,10 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 				// First, we validate the input.
 				errorLabel.setText("");
 				String textToServer = nameField.getText();
+				if (!FieldVerifier.isValidName(textToServer)) {
+					errorLabel.setText("User ID must only be numbers");
+					return;
+				}
 				
 				// Loading message
 				loadingLabel.setText("Loading... Please wait. Your request is being processed.");

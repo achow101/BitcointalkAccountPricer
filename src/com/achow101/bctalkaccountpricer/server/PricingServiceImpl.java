@@ -16,12 +16,11 @@
  ******************************************************************************/
 package com.achow101.bctalkaccountpricer.server;
 
-import java.math.BigInteger;
-import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.achow101.bctalkaccountpricer.client.PricingService;
+import com.achow101.bctalkaccountpricer.shared.FieldVerifier;
 import com.achow101.bctalkaccountpricer.shared.QueueRequest;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
@@ -36,9 +35,14 @@ public class PricingServiceImpl extends RemoteServiceServlet implements
 	public static List<QueueRequest> requestList = new ArrayList<QueueRequest>();
 	public static List<QueueRequest> ipWait = new ArrayList<QueueRequest>();
 
-	private static SecureRandom random = new SecureRandom();
-	
-	public String[] pricingServer(String input, QueueRequest request) {
+	public String[] pricingServer(String input, QueueRequest request) throws IllegalArgumentException {
+		// Verify that the input is valid. 
+		if (!FieldVerifier.isValidName(input)) {
+			// If the input is not valid, throw an IllegalArgumentException back to
+			// the client.
+			throw new IllegalArgumentException(
+					"User ID must only be numbers");
+		}
 		
 		System.out.println("Num Requests: " + requestList.size());
 
@@ -87,11 +91,7 @@ public class PricingServiceImpl extends RemoteServiceServlet implements
 			// Check if Ip needs to wait
 			for(QueueRequest req : ipWait)
 			{
-				if(req.getToken().equals(request.getToken()))
-				{
-					// TODO: Return the proper request.
-				}
-				else if(req.getIp().equals(request.getIp()) && request.getTime() - req.getTime() <= 600)
+				if(req.getIp().equals(request.getIp()) && request.getTime() - req.getTime() <= 600)
 				{
 					request.setQueuePos(-2);
 					return request;
@@ -100,12 +100,8 @@ public class PricingServiceImpl extends RemoteServiceServlet implements
 			
 			for(QueueRequest req : requestList)
 			{
-				if(req.getToken().equals(request.getToken()))
-				{
-					// TODO: Return that the request is still processing
-				}
 				// Check if ip already requested
-				else if(req.getIp().equals(request.getIp()))
+				if(req.getIp().equals(request.getIp()))
 				{
 					request.setQueuePos(-3);
 					return request;
@@ -115,9 +111,6 @@ public class PricingServiceImpl extends RemoteServiceServlet implements
 			request.setOldReq();
 			request.setGo(false);
 			requestList.add(request);
-			
-			// add the token
-			request.setToken(new BigInteger(130, random).toString(32));
 		}
 		
 		if(request.getQueuePos() == 0 && requestList.indexOf(request) == 0)
@@ -171,5 +164,16 @@ public class PricingServiceImpl extends RemoteServiceServlet implements
 			
 		}
 		return false;
+	}
+	
+	private void removeOldIPWaits()
+	{
+		for(QueueRequest req : ipWait)
+		{
+			if((System.currentTimeMillis() / 1000L) - req.getTime() >= 300)
+			{
+				ipWait.remove(req);
+			}
+		}
 	}
 }
