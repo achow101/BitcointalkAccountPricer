@@ -256,11 +256,11 @@ public class AccountPricer {
 	
 	private double estimatePrice(int activity, int potentialActivity, double ratio, int trust)
 	{
-		double price = 0.0006 * activity;
+		double price = 0.00065 * activity;
 		
 		// Extra potential activity
 		int epa = potentialActivity - activity;
-		price += epa * 0.0003;
+		price += epa * 0.000325;
 		
 		// Post quality multipliers
 		
