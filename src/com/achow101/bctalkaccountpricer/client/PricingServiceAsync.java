@@ -23,8 +23,6 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
  * The async counterpart of <code>PricingService</code>.
  */
 public interface PricingServiceAsync {
-	void pricingServer(String input, QueueRequest request, AsyncCallback<String[]> callback)
-			throws IllegalArgumentException;
 	void queueServer(QueueRequest request, AsyncCallback<QueueRequest> callback);
 	void removeRequest(QueueRequest request, AsyncCallback<Boolean> callback);
 }

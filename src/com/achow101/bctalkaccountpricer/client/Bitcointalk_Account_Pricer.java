@@ -138,6 +138,8 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 				
 				// Create and add request
 				request = new QueueRequest();
+				if(nameField.getText().matches("^[0-9]+$"))
+					request.setUid(Integer.parseInt(escapeHtml(nameField.getText())));
 				requestQueued = true;
 				
 				// request ping loop
@@ -177,15 +179,45 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 											cancel();
 										}
 										
+										else if(result.getQueuePos() == -4)
+										{
+											loadingLabel.setText("Invalid token");
+											sendButton.setEnabled(true);
+											requestQueued = false;
+											cancel();
+										}
+										
 										else
 										{
-											loadingLabel.setText("Please wait. You are number " + result.getQueuePos() + " in the queue.");
-											request = result;
-											if(result.getGo())
+											if(!result.isProcessing())
+											{
+												loadingLabel.setText("Please wait. You are number " + result.getQueuePos() + " in the queue.");
+											}
+											if(result.isProcessing())
+											{
+												loadingLabel.setText("Request is processing. Please wait");
+											}
+											if(result.isDone())
 											{
 												cancel();
-												sendNameToServer();
+												
+												// Clear other messages
+												errorLabel.setText("");
+												loadingLabel.setText("");
+												
+												// Output results
+												uidLabel.setText(result.getResult()[0]);
+												usernameLabel.setText(result.getResult()[1]);
+												postsLabel.setText(result.getResult()[2]);
+												activityLabel.setText(result.getResult()[3]);
+												potActivityLabel.setText(result.getResult()[4]);
+												postQualityLabel.setText(result.getResult()[5]);
+												trustLabel.setText(result.getResult()[6]);
+												priceLabel.setText(result.getResult()[7]);
+												sendButton.setEnabled(true);
+												requestQueued = false;
 											}
+											request = result;
 										}
 										
 									}
@@ -196,94 +228,19 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 					};
 					elaspedTimer.scheduleRepeating(2000);
 			}
-
-			/**
-			 * Send the name from the nameField to the server and wait for a response.
-			 */
-			private void sendNameToServer() {
-				
-				// First, we validate the input.
-				errorLabel.setText("");
-				String textToServer = nameField.getText();
-				
-				// Loading message
-				loadingLabel.setText("Loading... Please wait. Your request is being processed.");
-
-				// Get data from server
-				pricingService.pricingServer(textToServer, request,
-						new AsyncCallback<String[]>() {
-							public void onFailure(Throwable caught) {
-								// Show the RPC error message to the user
-								errorLabel.setText("Remote Procedure Call - Failure. Please try again");
-								loadingLabel.setText("");
-								sendButton.setEnabled(true);
-								requestQueued = false;
-								pricingService.removeRequest(request, null);
-							}
-							
-							public void onSuccess(String[] result)
-							{
-								// Display data
-												
-								// Clear other messages
-								errorLabel.setText("");
-								loadingLabel.setText("");
-								
-								// Output results
-								uidLabel.setText(result[0]);
-								usernameLabel.setText(result[1]);
-								postsLabel.setText(result[2]);
-								activityLabel.setText(result[3]);
-								potActivityLabel.setText(result[4]);
-								postQualityLabel.setText(result[5]);
-								trustLabel.setText(result[6]);
-								priceLabel.setText(result[7]);
-								sendButton.setEnabled(true);
-								requestQueued = false;
-							}
-						});
-			}
 		}
-
+		
 		// Add a handler to send the name to the server
 		MyHandler handler = new MyHandler();
 		sendButton.addClickHandler(handler);
 		nameField.addKeyUpHandler(handler);
-		
-		// Display leaving message if request is active
-		Window.addWindowClosingHandler(new Window.ClosingHandler() {
-		      public void onWindowClosing(Window.ClosingEvent closingEvent) {
-		    	  if(requestQueued)
-		    	  {
-		    		  closingEvent.setMessage("Do you really want to leave the page? Your request is queued and leaving will remove it.");
-		    	  }
-		      }
-		    });
-		
-		// Remove request on close
-		Window.addCloseHandler(new CloseHandler<Window>() {
-
-            @Override
-            public void onClose(CloseEvent<Window> event) {
-
-                if(requestQueued)
-                {
-                	pricingService.removeRequest(request, new AsyncCallback<Boolean>() {
-
-						@Override
-						public void onSuccess(Boolean result) {
-							// TODO Auto-generated method stub
-							
-						}
-
-						@Override
-						public void onFailure(Throwable caught) {
-							// TODO Auto-generated method stub
-							
-						}
-                	});
-                }
-            }
-        });
+	}
+	
+	private String escapeHtml(String html) {
+		if (html == null) {
+			return null;
+		}
+		return html.replaceAll("&", "&amp;").replaceAll("<", "&lt;")
+				.replaceAll(">", "&gt;");
 	}
 }

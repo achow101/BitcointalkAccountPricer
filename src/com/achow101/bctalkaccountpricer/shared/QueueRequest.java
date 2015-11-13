@@ -10,6 +10,10 @@ public class QueueRequest implements Serializable{
 	private String ip;
 	private long time;
 	private String token;
+	private String[] result;
+	private int uid = 0;
+	private boolean processing = false;
+	private boolean done = false;
 	
 	public boolean getGo()
 	{
@@ -69,5 +73,45 @@ public class QueueRequest implements Serializable{
 	public String getToken()
 	{
 		return token;
+	}
+	
+	public void setResult(String[] result)
+	{
+		this.result = result;
+	}
+	
+	public String[] getResult()
+	{
+		return result;
+	}
+	
+	public void setUid(int uid)
+	{
+		this.uid = uid;
+	}
+	
+	public int getUid()
+	{
+		return uid;
+	}
+	
+	public void setProcessing(boolean processing)
+	{
+		this.processing = processing;
+	}
+	
+	public boolean isProcessing()
+	{
+		return processing;
+	}
+	
+	public void setDone(boolean done)
+	{
+		this.done = done;
+	}
+	
+	public boolean isDone()
+	{
+		return done;
 	}
 }

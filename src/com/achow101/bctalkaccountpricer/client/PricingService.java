@@ -26,7 +26,6 @@ import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
  */
 @RemoteServiceRelativePath("pricing")
 public interface PricingService extends RemoteService {
-	String[] pricingServer(String name, QueueRequest request) throws IllegalArgumentException;
 	QueueRequest queueServer(QueueRequest request);
 	boolean removeRequest(QueueRequest request);
 }
