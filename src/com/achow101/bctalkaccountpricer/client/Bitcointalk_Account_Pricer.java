@@ -179,7 +179,7 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 										
 										else if(result.getQueuePos() == -2)
 										{
-											loadingLabel.setText("Please wait 10 minutes before requesting again.");
+											loadingLabel.setText("Please wait 5 minutes before requesting again.");
 											sendButton.setEnabled(true);
 											requestQueued = false;
 											cancel();

@@ -91,7 +91,7 @@ public class PricingServiceImpl extends RemoteServiceServlet implements
 			// Check if Ip needs to wait
 			for(QueueRequest req : ipWait)
 			{
-				if(req.getIp().equals(request.getIp()) && request.getTime() - req.getTime() <= 600)
+				if(req.getIp().equals(request.getIp()) && request.getTime() - req.getTime() <= 300)
 				{
 					request.setQueuePos(-2);
 					return request;
