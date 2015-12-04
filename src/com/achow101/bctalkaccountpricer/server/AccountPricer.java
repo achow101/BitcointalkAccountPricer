@@ -22,7 +22,10 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+import java.util.TimeZone;
 
 import com.gargoylesoftware.htmlunit.CookieManager;
 import com.gargoylesoftware.htmlunit.WebClient;
@@ -53,9 +56,9 @@ public class AccountPricer {
 		
 		// Summary vars
 		String postsString = null;
-		String activityString = null;
 		String line;
 		String username = null;
+		String rank = "";
 		
 		// Retrieve summary page
 		try {
@@ -73,18 +76,18 @@ public class AccountPricer {
 					postsString = line.substring(9, end);
 				}
 				
-				// record activity
-				if(prevLine != null && prevLine.contains("Activity:"))
-				{
-					int end = line.indexOf("<", 10);
-					activityString = line.substring(9, end);
-				}
-				
 				// record username
 				if(prevLine != null && prevLine.contains("Name: "))
 				{
 					int end = line.indexOf("<", 10);
 					username = line.substring(9, end);
+				}
+				
+				// record rank
+				if(prevLine != null && prevLine.contains("Position: "))
+				{
+					int end = line.indexOf("<", 10);
+					rank = line.substring(9, end);
 				}
 				
 				prevLine = line;
@@ -98,7 +101,6 @@ public class AccountPricer {
 		
 		// strings to numbers
 		int posts = Integer.parseInt(postsString);
-		int activity = Integer.parseInt(activityString);
 		
 		// get number of pages
 		int pages = posts / 20;
@@ -109,6 +111,7 @@ public class AccountPricer {
 		long[] dates = new long[posts];
 		int postcount = 0;
 		int goodPosts = 0;
+		List<Section> postsSections = new ArrayList<Section>();
 		
 		// get posts from each page of 20 posts
 		for(int i = 0; i < pages; i++)
@@ -155,31 +158,84 @@ public class AccountPricer {
 						if(post.length() >= 75)
 							goodPosts++;					
 					}
+					
+					// Get section of post
+					else if(line.contains("board="))
+					{
+						int lastSlashIndex = line.lastIndexOf("/", line.length() - 5);
+						int endIndex = line.lastIndexOf("</", lastSlashIndex);
+						int startIndex = line.lastIndexOf(">", endIndex);
+						String sectionName = line.substring(startIndex, endIndex);
+						boolean sectionExists = false;
+						int sectionIndex = -1;
+						for(int j = 0; j <postsSections.size(); j++)
+						{
+							if(sectionName.equals(postsSections.get(i).getName()))
+							{
+								sectionExists = true;
+								sectionIndex = j;
+							}
+						}
+						if(postsSections.size() == 0 || !sectionExists)
+						{
+							postsSections.add(new Section(sectionName));
+						}
+						else
+						{
+							postsSections.get(sectionIndex).incrementPostCount();
+						}
+					}
 				}
 				
 				is.close();
 				
 				// wait so ip is not banned.
-				Thread.sleep(1500);
+				Thread.sleep(1050);
 				
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
 		
-		// Calculate potential activity
+		// Get the sections and count up the number of posts in each
+		
+		// Calculate potential activity, activity, and number of posts in each two week period
 		int potActivity = 1;
 		long cur2week = 0;
 		long prev2week = 0;
+		int postsInWeek = 0;
+		int activity = 0;
+		List<ActivityDetail> activityDetail = new ArrayList<ActivityDetail>();
 		for(int i = dates.length - 1; i >= 0; i--)
 		{
 			cur2week = dates[i] - (dates[i] % 1210000);
 			if(cur2week != prev2week)
 			{
 				potActivity += 14;
+				activityDetail.add(new ActivityDetail(prev2week, cur2week, postsInWeek));
+				postsInWeek = 0;
+			}
+			
+			if(postsInWeek <= 14)
+			{
+				activity++;
 			}
 			
 			prev2week = cur2week;
+			postsInWeek++;
+		}
+		
+		// Add most recent 2 week period
+		activityDetail.add(new ActivityDetail(prev2week, -1, postsInWeek));
+		
+		// Remove extraneious first 2 week period
+		activityDetail.remove(0);
+		
+		// Put detailed activity info into a string array
+		String[] activityBreakdown = new String[activityDetail.size()];
+		for(int i = 0; i < activityDetail.size(); i++)
+		{
+			activityBreakdown[i] = activityDetail.get(i).toString();
 		}
 		
 		// Remove initial 1 so that potential activity is correct.
@@ -241,15 +297,25 @@ public class AccountPricer {
 		// Format price
 		DecimalFormat dfmt = new DecimalFormat("##,###,##0.00000000");
 		
-		// Write to output
+		// Get ranks
+		String potRank = getRank(activity, true);
+		if(!rank.equals("Legendary"))
+		{
+			rank = getRank(activity, false);
+		}
+		
+		// Write to intial output
 		output[0] = "User Id: " + userId;
 		output[1] = "Name: " + username;
-		output[2] = "Posts: " + posts;
-		output[3] = "Activity: " + activity;
-		output[4] = "Potential Activity: " + potActivity;
+		output[2] = "Posts: " + postcount;
+		output[3] = "Activity: " + activity + "(" + rank + ")";
+		output[4] = "Potential Activity: " + potActivity + "(Potential " + potRank + ")";
 		output[5] = "Post Quality: " + postQuality;
 		output[6] = "Trust: " + trust;
 		output[7] = "Estimated Price: " + dfmt.format(price);
+		
+		// Combine output with activity breakdown
+		output = combineArrays(output, activityBreakdown);
 		
 		return output;
 	}
@@ -365,5 +431,117 @@ public class AccountPricer {
 		}
 	    
 		return 0;
+	}
+	
+	private String getRank(int activity, boolean potential)
+	{
+		String rank = "";
+		if(activity < 30)
+		{
+			rank = "Newbie";
+		}
+		else if(activity >=30 && activity < 60)
+		{
+			rank = "Jr. Member";
+		}
+		else if(activity >= 60 && activity < 120)
+		{
+			rank = "Member";
+		}
+		else if(activity >= 120 && activity < 240)
+		{
+			rank = "Full Member";
+		}
+		else if(activity >= 240 && activity < 480)
+		{
+			rank = "Sr. Member";
+		}
+		else if(activity >= 480 && activity < 775)
+		{
+			rank = "Hero Member";
+		}
+		else if(activity >= 775)
+		{
+			rank = "Legendary";
+			if(potential)
+			{
+				rank = "Legendary *Note: Not guaranteed; The account can become Legendary anywhere between 775 and 1030";
+			}
+		}
+		return rank;
+	}
+	
+	private String[] combineArrays(String[] a, String[] b){
+		int length = a.length + b.length;
+		String[] result = new String[length];
+        System.arraycopy(a, 0, result, 0, a.length);
+        System.arraycopy(b, 0, result, a.length, b.length);
+        return result;
+    }
+	
+	private class Section
+	{
+		private String name;
+		private int numPosts = 0;
+		
+		public Section(String name)
+		{
+			this.name = name;
+		}
+		
+		public void incrementPostCount()
+		{
+			numPosts++;
+		}
+		
+		public String getName()
+		{
+			return name;
+		}
+		
+		public String toString()
+		{
+			return name + ": " + numPosts + " Posts";
+		}
+	}
+	
+	private class ActivityDetail
+	{
+		private long startTimestamp;
+		private long endTimestamp;
+		private int numPosts;
+		
+		public ActivityDetail(long startTimestamp, long endTimestamp, int numPosts)
+		{
+			this.startTimestamp = startTimestamp;
+			this.endTimestamp = endTimestamp;
+			this.numPosts = numPosts;
+		}
+		
+		public String toString()
+		{
+			SimpleDateFormat sdf = new SimpleDateFormat("EEEE, MMMM d yyyy HH:mm:ss"); 
+			sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
+			
+			// Convert start timestamp to date
+			Date startDate = new Date(1000L*startTimestamp);
+			String formattedStartDate = sdf.format(startDate);
+			
+			// Convert end timestamp to date
+			String formattedEndDate = "";
+			if(endTimestamp == -1)
+			{
+				formattedEndDate = "Present";
+			}
+			else
+			{
+				Date endDate = new Date(1000L*endTimestamp);
+				formattedEndDate = sdf.format(endDate);
+			}
+			
+			// Add to array
+			return formattedStartDate + " - " + formattedEndDate + ": " + numPosts + " Posts";
+		
+		}
 	}
 }
