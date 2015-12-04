@@ -6,10 +6,11 @@ assume that you are using Eclipse and have already set it up. It will also expla
 1. Install the Google Plugin for Eclipse. Instructions [here](https://developers.google.com/eclipse/docs/download)
 2. Import the project
   * Clone the project to your working directory
-  * Go to File > New > Java Project and selecte Create project from existing source and import the project
+  * Go to File > New > Java Project. Set the project name to BitcointalkAccountPricer and the directory to the directory where you downloaded the project.
 3. Add HTml Unit to the project
   * Download [HtmlUnit](http://htmlunit.sourceforge.net/)
   * Add it to the project by right clicking the project and selecting Build Path > Configure Build Path and going to the Libraries tab. Click Add External JARs... and select the HtmlUnit JAR files.
+4. Add the GWT libraries by going again to the Libraries tab and clicking Add Library... then selecting Google Web Toolkit.
 
 ##Compiling In Eclipse
 1. Right click on the project and select Google > GWT Compile and compile the application. You may also need to Project > clean and make sure that it automatically builds after the clean.

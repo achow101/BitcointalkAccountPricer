@@ -13,7 +13,7 @@ Below is the algorithm used to determine the price of an account
     
     epa = potential activity - activity
     
-    bp (base price) = 0.00075 * activity + 0.000375 * epa
+    bp (base price) = 0.0006 * activity + 0.0003 * epa
     
     final price = bp * pqm * tm
     
