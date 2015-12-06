@@ -1,4 +1,3 @@
-@FinalFields, false
 com.achow101.bctalkaccountpricer.client.PricingService, false, false, false, false, _, 1764193699
 com.achow101.bctalkaccountpricer.shared.QueueRequest, true, true, true, true, com.achow101.bctalkaccountpricer.shared.QueueRequest/685168205, 685168205
 com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException, true, true, true, true, com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException/3936916533, 3936916533

@@ -31,9 +31,11 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.VerticalPanel;
 
 /**
  * Entry point classes define <code>onModuleLoad()</code>.
@@ -95,6 +97,18 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 		RootPanel.get("trustLabelContainer").add(trustLabel);
 		RootPanel.get("priceLabelContainer").add(priceLabel);
 		RootPanel.get("loadingLabelContainer").add(loadingLabel);
+		
+		// Create activity breakdown panel
+		final VerticalPanel actPanel = new VerticalPanel();
+		final FlexTable actTable = new FlexTable();
+		actPanel.add(actTable);
+		RootPanel.get("activityBreakdown").add(actPanel);
+		
+		// Create posts breakdown panel
+		final VerticalPanel postsPanel = new VerticalPanel();
+		final FlexTable postsTable = new FlexTable();
+		postsPanel.add(postsTable);
+		RootPanel.get("postsBreakdown").add(postsPanel);
 
 		// Focus the cursor on the name field when the app loads
 		nameField.setFocus(true);
@@ -136,7 +150,17 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 				sendButton.setEnabled(false);
 				errorLabel.setText("");
 				loadingLabel.setText("");
-				
+				actTable.clear(true);
+				postsTable.clear(true);
+				/*for(int i = 0; i < actTable.getRowCount(); i++)
+				{
+					
+					actTable.setHTML(i, 0, "");
+				}
+				for(int i = 0; i < postsTable.getRowCount(); i++)
+				{
+					postsTable.setHTML(i, 0, "");
+				}*/
 				
 				// validate input
 				if (!FieldVerifier.isValidName(nameField.getText())) {
@@ -250,6 +274,21 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 								postQualityLabel.setText(result[5]);
 								trustLabel.setText(result[6]);
 								priceLabel.setText(result[7]);
+								int indexOfLastAct = 0;
+								for(int i = 8; i < result.length; i++)
+								{
+									if(result[i].equals("<b>Post Sections Breakdown</b>"))
+									{
+										indexOfLastAct = i;
+										break;
+									}
+									actTable.setHTML(i - 8, 0, result[i]);
+								}
+								for(int i = indexOfLastAct; i < result.length; i++)
+								{
+									postsTable.setHTML(i - indexOfLastAct, 0, result[i]);
+								}
+								
 								sendButton.setEnabled(true);
 								requestQueued = false;
 							}

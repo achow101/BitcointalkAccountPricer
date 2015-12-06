@@ -164,21 +164,23 @@ public class AccountPricer {
 					{
 						int lastSlashIndex = line.lastIndexOf("/", line.length() - 5);
 						int endIndex = line.lastIndexOf("</", lastSlashIndex);
-						int startIndex = line.lastIndexOf(">", endIndex);
+						int startIndex = line.lastIndexOf(">", endIndex) + 1;
 						String sectionName = line.substring(startIndex, endIndex);
 						boolean sectionExists = false;
 						int sectionIndex = -1;
-						for(int j = 0; j <postsSections.size(); j++)
+						for(int j = 0; j < postsSections.size(); j++)
 						{
-							if(sectionName.equals(postsSections.get(i).getName()))
+							if(sectionName.equals(postsSections.get(j).getName()))
 							{
 								sectionExists = true;
 								sectionIndex = j;
+								break;
 							}
 						}
 						if(postsSections.size() == 0 || !sectionExists)
 						{
 							postsSections.add(new Section(sectionName));
+							postsSections.get(postsSections.size() - 1).incrementPostCount();
 						}
 						else
 						{
@@ -197,14 +199,19 @@ public class AccountPricer {
 			}
 		}
 		
-		// Get the sections and count up the number of posts in each
+		// Put posts info into a string array
+		String[] postsBreakdown = new String[postsSections.size() + 1];
+		postsBreakdown[0] = "<b>Post Sections Breakdown</b>";
+		for(int i = 1; i < postsSections.size(); i++)
+		{
+			postsBreakdown[i] = postsSections.get(i).toString();
+		}
 		
-		// Calculate potential activity, activity, and number of posts in each two week period
-		int potActivity = 1;
+		// Calculate potential activity, and number of posts in each two week period
+		int potActivity = 0;
 		long cur2week = 0;
 		long prev2week = 0;
 		int postsInWeek = 0;
-		int activity = 0;
 		List<ActivityDetail> activityDetail = new ArrayList<ActivityDetail>();
 		for(int i = dates.length - 1; i >= 0; i--)
 		{
@@ -216,11 +223,6 @@ public class AccountPricer {
 				postsInWeek = 0;
 			}
 			
-			if(postsInWeek <= 14)
-			{
-				activity++;
-			}
-			
 			prev2week = cur2week;
 			postsInWeek++;
 		}
@@ -228,18 +230,19 @@ public class AccountPricer {
 		// Add most recent 2 week period
 		activityDetail.add(new ActivityDetail(prev2week, -1, postsInWeek));
 		
-		// Remove extraneious first 2 week period
+		// Remove extraneous first 2 week period
 		activityDetail.remove(0);
 		
-		// Put detailed activity info into a string array
-		String[] activityBreakdown = new String[activityDetail.size()];
-		for(int i = 0; i < activityDetail.size(); i++)
-		{
-			activityBreakdown[i] = activityDetail.get(i).toString();
-		}
+		// Calculate activity
+		int activity = Math.min(activityDetail.size() * 14, posts);
 		
-		// Remove initial 1 so that potential activity is correct.
-		potActivity--;
+		// Put detailed activity info into a string array
+		String[] activityBreakdown = new String[activityDetail.size() + 1];
+		activityBreakdown[0] = "<b>Activity periods breakdown</b>";
+		for(int i = 1; i <= activityDetail.size(); i++)
+		{
+			activityBreakdown[i] = activityDetail.get(i - 1).toString();
+		}
 		
 		// Get post quality
 		double postRatio = (double)goodPosts / posts;
@@ -308,14 +311,17 @@ public class AccountPricer {
 		output[0] = "User Id: " + userId;
 		output[1] = "Name: " + username;
 		output[2] = "Posts: " + postcount;
-		output[3] = "Activity: " + activity + "(" + rank + ")";
-		output[4] = "Potential Activity: " + potActivity + "(Potential " + potRank + ")";
+		output[3] = "Activity: " + activity + " (" + rank + ")";
+		output[4] = "Potential Activity: " + potActivity + " (Potential " + potRank + ")";
 		output[5] = "Post Quality: " + postQuality;
 		output[6] = "Trust: " + trust;
 		output[7] = "Estimated Price: " + dfmt.format(price);
 		
 		// Combine output with activity breakdown
 		output = combineArrays(output, activityBreakdown);
+		
+		// Combine output with posts Breakdown
+		output = combineArrays(output, postsBreakdown);
 		
 		return output;
 	}
@@ -540,7 +546,7 @@ public class AccountPricer {
 			}
 			
 			// Add to array
-			return formattedStartDate + " - " + formattedEndDate + ": " + numPosts + " Posts";
+			return formattedStartDate + " - " + formattedEndDate + ": " + numPosts + " Posts" ;
 		
 		}
 	}

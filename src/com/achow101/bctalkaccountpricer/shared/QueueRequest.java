@@ -4,11 +4,17 @@ import java.io.Serializable;
 
 public class QueueRequest implements Serializable{
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private boolean go = false;
 	private int pos = 0;
 	private boolean newRequest = true;
 	private String ip;
 	private long time;
+	
+	public QueueRequest(){}
 	
 	public boolean getGo()
 	{
