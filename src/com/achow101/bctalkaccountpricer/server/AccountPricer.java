@@ -219,7 +219,7 @@ public class AccountPricer {
 			if(cur2week != prev2week)
 			{
 				potActivity += 14;
-				activityDetail.add(new ActivityDetail(prev2week, cur2week, postsInWeek));
+				activityDetail.add(new ActivityDetail(prev2week, prev2week + 1210000L, postsInWeek));
 				postsInWeek = 0;
 			}
 			
