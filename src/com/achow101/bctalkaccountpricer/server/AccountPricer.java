@@ -301,10 +301,10 @@ public class AccountPricer {
 		DecimalFormat dfmt = new DecimalFormat("##,###,##0.00000000");
 		
 		// Get ranks
-		String potRank = getRank(activity, true);
+		String potRank = getRank(activity, true, rank.equals("Legendary"));
 		if(!rank.equals("Legendary"))
 		{
-			rank = getRank(activity, false);
+			rank = getRank(activity, false, false);
 		}
 		
 		// Write to intial output
@@ -409,7 +409,7 @@ public class AccountPricer {
 		    final HtmlPage profilePage = webClient.getPage("https://bitcointalk.org/index.php?action=profile;u=" + userId);
 		    
 		    // Get trust rating
-		    final HtmlSpan trustSpan = (HtmlSpan)profilePage.getFirstByXPath("/html/body/div/table/tbody/tr/td/table/tbody/tr/td/table/tbody/tr/td//span[@class='trustscore']");
+		    final HtmlSpan trustSpan = (HtmlSpan)profilePage.getFirstByXPath("//*[@id=\"bodyarea\"]/table/tbody/tr/td/table/tbody/tr[2]/td[1]/table/tbody/tr[21]/td[2]/span[1]");
 		    
 		    String trustString = trustSpan.toString();
 		    
@@ -439,7 +439,7 @@ public class AccountPricer {
 		return 0;
 	}
 	
-	private String getRank(int activity, boolean potential)
+	private String getRank(int activity, boolean potential, boolean isLegendary)
 	{
 		String rank = "";
 		if(activity < 30)
@@ -469,7 +469,7 @@ public class AccountPricer {
 		else if(activity >= 775)
 		{
 			rank = "Legendary";
-			if(potential)
+			if(potential && !isLegendary)
 			{
 				rank = "Legendary *Note: Not guaranteed; The account can become Legendary anywhere between 775 and 1030";
 			}
