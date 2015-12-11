@@ -27,6 +27,12 @@ import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
 
+import org.jsoup.Connection;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
 import com.gargoylesoftware.htmlunit.CookieManager;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.HtmlForm;
@@ -62,38 +68,30 @@ public class AccountPricer {
 		
 		// Retrieve summary page
 		try {
-			URL url = new URL("https://bitcointalk.org/index.php?action=profile;u=" + userId + ";sa=summary");
-			InputStream is = url.openStream();
-			BufferedReader br = new BufferedReader(new InputStreamReader(is));
-			String prevLine = null;
 			
-			while((line = br.readLine()) != null)
+			Document profileSummary = Jsoup.connect("https://bitcointalk.org/index.php?action=profile;u=" + userId + ";sa=summary").get();
+			
+			Element profileTable = profileSummary.select("table.bordercolor[align=center]").get(0);
+			
+			Elements profileElements = profileTable.select("td.windowbg > table > tbody > tr > td");
+			
+			Element lastProfileElem = profileElements.get(1);
+			for(Element elem : profileElements)
 			{
-				// Record number of posts
-				if(prevLine != null && prevLine.contains("Posts:"))
+				if(lastProfileElem.text().contains("Name:"))
 				{
-					int end = line.indexOf("<", 10);
-					postsString = line.substring(9, end);
+					username = elem.text();
 				}
-				
-				// record username
-				if(prevLine != null && prevLine.contains("Name: "))
+				if(lastProfileElem.text().contains("Posts:"))
 				{
-					int end = line.indexOf("<", 10);
-					username = line.substring(9, end);
+					postsString = elem.text();
 				}
-				
-				// record rank
-				if(prevLine != null && prevLine.contains("Position: "))
+				if(lastProfileElem.text().contains("Position:"))
 				{
-					int end = line.indexOf("<", 10);
-					rank = line.substring(9, end);
+					rank = elem.text();
 				}
-				
-				prevLine = line;
+				lastProfileElem = elem;
 			}
-			
-			is.close();
 			
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -389,44 +387,36 @@ public class AccountPricer {
 	private int checkForTrust()
 	{
 		try{
-			// Get initial web page
-			final WebClient webClient = new WebClient();
-			CookieManager cookieMan = new CookieManager();
-			cookieMan = webClient.getCookieManager();
-			cookieMan.setCookiesEnabled(true);
-			final HtmlPage loginPage = webClient.getPage("https://bitcointalk.org/index.php");
-			final HtmlForm form = (HtmlForm) loginPage.getFirstByXPath("//form[@action='https://bitcointalk.org/index.php?action=login2']");
-	
-			// login as accountbot
-		    final HtmlSubmitInput button = (HtmlSubmitInput) form.getInputsByValue("Login").get(0);
-		    final HtmlTextInput textField = form.getInputByName("user");
-		    textField.setValueAttribute(ACCOUNT_NAME);
-		    final HtmlPasswordInput textField2 = form.getInputByName("passwrd");
-		    textField2.setValueAttribute(ACCOUNT_PASS);
-		    final HtmlPage postLoginPage = button.click();
+			Connection.Response res = Jsoup.connect("https://bitcointalk.org/index.php?action=login2")
+                    .followRedirects(true)
+                    .data("user", ACCOUNT_NAME)
+                    .data("passwrd", ACCOUNT_PASS)
+                    .data("cookielength", "-1")
+                    .method(Connection.Method.POST)
+                    .execute();
+            Document loggedInDocument = res.parse();
+            
+            String sessId = res.cookie("PHPSESSID");
+            
+            Document profileDoc = Jsoup.connect("https://bitcointalk.org/index.php?action=profile;u=" + userId).cookie("PHPSESSID", sessId).get();
 		    
-		    // Get profile page
-		    final HtmlPage profilePage = webClient.getPage("https://bitcointalk.org/index.php?action=profile;u=" + userId);
-		    
-		    // Get trust rating
-		    final HtmlSpan trustSpan = (HtmlSpan)profilePage.getFirstByXPath("//*[@id=\"bodyarea\"]/table/tbody/tr/td/table/tbody/tr[2]/td[1]/table/tbody/tr[21]/td[2]/span[1]");
-		    
-		    String trustString = trustSpan.toString();
+		    Element trustSpan = profileDoc.select("span.trustscore").get(0);
+		    String trustColor = trustSpan.attr("style");
 		    
 		    // Neg trust
-		    if(trustString.contains("color:#DC143C"))
+		    if(trustColor.contains("color:#DC143C"))
 		    {
 		    	return -1;
 		    }
 		    
 		    // light green trust
-		    if(trustString.contains("color:#74C365"))
+		    if(trustColor.contains("color:#74C365"))
 		    {
 		    	return 1;
 		    }
 		    
 		    // Dark green trust
-		    if(trustString.contains("color:#008000"))
+		    if(trustColor.contains("color:#008000"))
 		    {
 		    	return 2;
 		    }
@@ -462,11 +452,12 @@ public class AccountPricer {
 		{
 			rank = "Sr. Member";
 		}
-		else if(activity >= 480 && activity < 775)
+		else if(activity >= 480)
 		{
 			rank = "Hero Member";
 		}
-		else if(activity >= 775)
+		
+		if(activity >= 775 && (isLegendary || potential))
 		{
 			rank = "Legendary";
 			if(potential && !isLegendary)

@@ -8,7 +8,7 @@ assume that you are using Eclipse and have already set it up. It will also expla
   * Clone the project to your working directory
   * Go to File > New > Java Project. Set the project name to BitcointalkAccountPricer and the directory to the directory where you downloaded the project.
 3. Add HTml Unit to the project
-  * Download [HtmlUnit](http://htmlunit.sourceforge.net/)
+  * Download [JSoup](http://jsoup.org/)
   * Add it to the project by right clicking the project and selecting Build Path > Configure Build Path and going to the Libraries tab. Click Add External JARs... and select the HtmlUnit JAR files.
 4. Add the GWT libraries by going again to the Libraries tab and clicking Add Library... then selecting Google Web Toolkit.
 
