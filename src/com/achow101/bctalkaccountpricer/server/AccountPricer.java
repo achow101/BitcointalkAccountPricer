@@ -193,10 +193,14 @@ public class AccountPricer {
 					
 				}
 				
+				// wait so ip is not banned.
+				Thread.sleep(1010);
+				
 			} catch (Exception e)
 			{
 				e.printStackTrace();
 			}
+			
 		}
 		
 		// Put posts info into a string array
