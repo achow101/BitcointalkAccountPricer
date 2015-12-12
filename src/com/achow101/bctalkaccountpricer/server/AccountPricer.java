@@ -69,23 +69,32 @@ public class AccountPricer {
 		// Retrieve summary page
 		try {
 			
+			// Get the profile summary page
 			Document profileSummary = Jsoup.connect("https://bitcointalk.org/index.php?action=profile;u=" + userId + ";sa=summary").get();
 			
+			// Select profile table element
 			Element profileTable = profileSummary.select("table.bordercolor[align=center]").get(0);
 			
+			// Get elements of the profile
 			Elements profileElements = profileTable.select("td.windowbg > table > tbody > tr > td");
 			
+			// Find the right elements
 			Element lastProfileElem = profileElements.get(1);
 			for(Element elem : profileElements)
 			{
+				// username
 				if(lastProfileElem.text().contains("Name:"))
 				{
 					username = elem.text();
 				}
+				
+				// posts
 				if(lastProfileElem.text().contains("Posts:"))
 				{
 					postsString = elem.text();
 				}
+				
+				// position
 				if(lastProfileElem.text().contains("Position:"))
 				{
 					rank = elem.text();
@@ -116,83 +125,76 @@ public class AccountPricer {
 		{
 			// get page
 			try {
-				URL url = new URL("https://bitcointalk.org/index.php?action=profile;u=" + userId + ";sa=showPosts;start=" + (i * 20));
-				InputStream is = url.openStream();
-				BufferedReader br = new BufferedReader(new InputStreamReader(is));
 				
-				while((line = br.readLine()) != null)
+				// get post page
+				Document postPage = Jsoup.connect("https://bitcointalk.org/index.php?action=profile;u=" + userId + ";sa=showPosts;start=" + (i * 20)).get();
+				
+				// get the table of each post
+				Elements postTables = postPage.select("table[width=100%][cellpadding=4][align=center].bordercolor");
+				
+				// get the post sections of each post
+				for(Element postTable : postTables)
 				{					
-					// get date of post
+					// get post header and get the text
+					Element postHeader = postTable.select("tr.titlebg2").get(0);
+					Element postDate = postHeader.select("td.middletext").get(1);
+					String dateStr = postDate.text().substring(4);
+					
+					// Parse date string and get unix timestamp
 					SimpleDateFormat fmt = new SimpleDateFormat("MMMM dd, yyyy, hh:mm:ss a");
 					Date date;
-					
-					if(line.startsWith("\t\t\t\t\t\t\t\ton:"))
+					if(dateStr.contains("Today"))
 					{
-						String dateStr = line.substring(12);
-						if(dateStr.contains("Today"))
-						{
-							date = new Date();
-							String currentDateStr = fmt.format(date);
-							dateStr = dateStr.replace("<b>Today</b> at", currentDateStr.substring(0, currentDateStr.lastIndexOf(",") + 1));
-						}
-						date = fmt.parse(dateStr);
-						long unixtime = date.getTime() / 1000;
-						dates[postcount] = unixtime;
-						
+						date = new Date();
+						String currentDateStr = fmt.format(date);
+						dateStr = dateStr.replace("<b>Today</b> at", currentDateStr.substring(0, currentDateStr.lastIndexOf(",") + 1));
 					}
+					date = fmt.parse(dateStr);
+					long unixtime = date.getTime() / 1000;
+					dates[postcount] = unixtime;
 					
-					// get nonquoted text of post
-					if(line.contains("class=\"post\""))
+					// Get the board
+					Element postBoard = postHeader.select("td.middletext").get(0);
+					String boardString = postBoard.text();
+					int lastSlashIndex = boardString.lastIndexOf("/");
+					boardString = boardString.substring(boardString.lastIndexOf("/", lastSlashIndex - 2) + 2, lastSlashIndex - 1);
+					boolean sectionExists = false;
+					int sectionIndex = -1;
+					for(int j = 0; j < postsSections.size(); j++)
 					{
-						postcount++;
-						int startIndex = line.indexOf(">");
-						if(line.contains("class=\"quote"))
+						if(boardString.equals(postsSections.get(j).getName()))
 						{
-							startIndex = line.lastIndexOf("</div>", line.lastIndexOf("</div>") - 1);
-						}
-						
-						String post = line.substring(startIndex, line.lastIndexOf("</div>"));
-						
-						if(post.length() >= 75)
-							goodPosts++;					
-					}
-					
-					// Get section of post
-					else if(line.contains("board="))
-					{
-						int lastSlashIndex = line.lastIndexOf("/", line.length() - 5);
-						int endIndex = line.lastIndexOf("</", lastSlashIndex);
-						int startIndex = line.lastIndexOf(">", endIndex) + 1;
-						String sectionName = line.substring(startIndex, endIndex);
-						boolean sectionExists = false;
-						int sectionIndex = -1;
-						for(int j = 0; j < postsSections.size(); j++)
-						{
-							if(sectionName.equals(postsSections.get(j).getName()))
-							{
-								sectionExists = true;
-								sectionIndex = j;
-								break;
-							}
-						}
-						if(postsSections.size() == 0 || !sectionExists)
-						{
-							postsSections.add(new Section(sectionName));
-							postsSections.get(postsSections.size() - 1).incrementPostCount();
-						}
-						else
-						{
-							postsSections.get(sectionIndex).incrementPostCount();
+							sectionExists = true;
+							sectionIndex = j;
+							break;
 						}
 					}
+					if(postsSections.size() == 0 || !sectionExists)
+					{
+						postsSections.add(new Section(boardString));
+						postsSections.get(postsSections.size() - 1).incrementPostCount();
+					}
+					else
+					{
+						postsSections.get(sectionIndex).incrementPostCount();
+					}
+					
+					// get post body and get the html
+					Element postBody = postTable.select("tr > td.windowbg2 > div.post").get(0);
+					
+					// Remove the quote classes
+					postBody.select("div.quote, div.quoteheader").remove();
+					String postString = postBody.text();
+					
+					// Count the post
+					if(postString.length() >= 75)
+						goodPosts++;
+					postcount++;
+					
 				}
 				
-				is.close();
-				
-				// wait so ip is not banned.
-				Thread.sleep(1050);
-				
-			} catch (Exception e) {
+			} catch (Exception e)
+			{
 				e.printStackTrace();
 			}
 		}
@@ -299,7 +301,7 @@ public class AccountPricer {
 		DecimalFormat dfmt = new DecimalFormat("##,###,##0.00000000");
 		
 		// Get ranks
-		String potRank = getRank(activity, true, rank.equals("Legendary"));
+		String potRank = getRank(potActivity, true, rank.equals("Legendary"));
 		if(!rank.equals("Legendary"))
 		{
 			rank = getRank(activity, false, false);
