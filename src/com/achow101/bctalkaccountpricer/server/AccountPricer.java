@@ -147,7 +147,7 @@ public class AccountPricer {
 					{
 						date = new Date();
 						String currentDateStr = fmt.format(date);
-						dateStr = dateStr.replace("<b>Today</b> at", currentDateStr.substring(0, currentDateStr.lastIndexOf(",") + 1));
+						dateStr = dateStr.replace("Today at", currentDateStr.substring(0, currentDateStr.lastIndexOf(",") + 1));
 					}
 					date = fmt.parse(dateStr);
 					long unixtime = date.getTime() / 1000;
