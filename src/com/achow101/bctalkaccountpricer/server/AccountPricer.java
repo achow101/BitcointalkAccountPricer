@@ -156,8 +156,8 @@ public class AccountPricer {
 					// Get the board
 					Element postBoard = postHeader.select("td.middletext").get(0);
 					String boardString = postBoard.text();
-					int lastSlashIndex = boardString.lastIndexOf("/");
-					boardString = boardString.substring(boardString.lastIndexOf("/", lastSlashIndex - 2) + 2, lastSlashIndex - 1);
+					int lastSlashIndex = boardString.lastIndexOf(" / ");
+					boardString = boardString.substring(boardString.lastIndexOf(" / ", lastSlashIndex - 2) + 3, lastSlashIndex);
 					boolean sectionExists = false;
 					int sectionIndex = -1;
 					for(int j = 0; j < postsSections.size(); j++)
