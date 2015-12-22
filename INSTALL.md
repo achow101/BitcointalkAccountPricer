@@ -3,10 +3,10 @@ Instructions on how to compile and install the source on a server
 
 ##Prerequisites
 Download the following and extract them to a directory if the download is compressed:
--Google Web Toolkit SDK: http://www.gwtproject.org/download.html
--Apache Tomcat: https://tomcat.apache.org/download-90.cgi
--JSoup: http://jsoup.org/download
--Apache Ant: https://ant.apache.org/bindownload.cgi
+- Google Web Toolkit SDK: http://www.gwtproject.org/download.html
+- Apache Tomcat: https://tomcat.apache.org/download-90.cgi
+- JSoup: http://jsoup.org/download
+- Apache Ant: https://ant.apache.org/bindownload.cgi
 
 ##Compiling
 1. Open src/com/achow101/bctalkaccountpricer/server/AccountPricer.java and change the strings in ACCOUNT_NAME and ACCOUNT_PASS to an actual working account username and password.
