@@ -269,12 +269,53 @@ public class AccountPricer {
 		int activity = Math.min(activityDetail.size() * 14, posts);
 		
 		// Put detailed activity info into a string array
-		String[] activityBreakdown = new String[activityDetail.size() + 1];
+		String[] activityBreakdown = new String[activityDetail.size() + 4];
 		activityBreakdown[0] = "<b>Activity periods breakdown</b>";
 		for(int i = 1; i <= activityDetail.size(); i++)
 		{
 			activityBreakdown[i] = activityDetail.get(i - 1).toString();
 		}
+		
+		// Get ranks
+		String potRank = getRank(potActivity, true, rank.equals("Legendary"));
+		if(!rank.equals("Legendary"))
+		{
+			rank = getRank(activity, false, false);
+		}
+		
+		// Add next potential rank requirments to end of activity breakdown
+		int potActToNext = 0;
+		String nextPotRank = "Newbie";
+		switch(potRank)
+		{
+			case "Newbie": 
+				potActToNext = 30 - potActivity;
+				nextPotRank = "Jr. Member";
+				break;
+			case "Jr. Member": 
+				potActToNext = 60 - potActivity;
+				nextPotRank = "Member";				
+				break;
+			case "Member": potActToNext = 120 - potActivity;
+				nextPotRank = "Full Member";
+				break;
+			case "Full Member": potActToNext = 240 - potActivity;
+				nextPotRank = "Sr. Member";
+				break;
+			case "Sr. Member": potActToNext = 480 - potActivity;
+				nextPotRank = "Hero Member";
+				break;
+			case "Hero Member": potActToNext = 775 - potActivity;
+				nextPotRank = "Legendary";
+				break;
+			case "Legendary": potActToNext = 0;
+				nextPotRank = "Already the highest Rank";
+				break;
+		}
+		
+		activityBreakdown[activityBreakdown.length - 3] = "<b>Next Potential Rank: </b>" + nextPotRank;
+		activityBreakdown[activityBreakdown.length - 2] = "<b>Weeks to Next Potential Rank: </b>" + (int)(Math.ceil(potActToNext/7.0));
+		activityBreakdown[activityBreakdown.length - 1] = "<b>Potential Activity to next Potential Rank: </b>" + potActToNext;
 		
 		// Get post quality
 		double postRatio = (double)goodPosts / posts;
@@ -332,12 +373,6 @@ public class AccountPricer {
 		// Format price
 		DecimalFormat dfmt = new DecimalFormat("##,###,##0.00000000");
 		
-		// Get ranks
-		String potRank = getRank(potActivity, true, rank.equals("Legendary"));
-		if(!rank.equals("Legendary"))
-		{
-			rank = getRank(activity, false, false);
-		}
 		
 		// Write to intial output
 		output[0] = "User Id: " + userId;
