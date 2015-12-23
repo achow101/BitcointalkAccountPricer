@@ -194,7 +194,21 @@ public class AccountPricer {
 					Matcher matcher = pattern.matcher(postString);
 					while(matcher.find())
 					{
-						addresses.add(new Address(matcher.group(), postURL, dateStr));
+						String address = matcher.group();
+						boolean hasAddr = false;
+						for(Address addr : addresses)
+						{
+							if(addr.getAddr().equals(address))
+							{
+								addr.setDateURL(dateStr, postURL);
+								hasAddr = true;
+								break;
+							}
+						}
+						if(!hasAddr)
+						{
+							addresses.add(new Address(address, postURL, dateStr));
+						}
 					}
 				}
 				
@@ -578,9 +592,20 @@ public class AccountPricer {
 			this.postDate = postDate;
 		}
 		
+		public String getAddr()
+		{
+			return addr;
+		}
+		
+		public void setDateURL(String postDate, String postURL)
+		{
+			this.postDate = postDate;
+			this.postURL = postURL;
+		}
+		
 		public String toString()
 		{
-			return "<a href=\"" + postURL + "\">" + addr + " Posted on: " + postDate + "</a>"; 
+			return "<a href=\"" + postURL + "\">" + addr + " First posted on: " + postDate + "</a>"; 
 		}
 	}
 }
