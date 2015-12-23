@@ -7,6 +7,7 @@ Download the following and extract them to a directory if the download is compre
 - Apache Tomcat: https://tomcat.apache.org/download-90.cgi
 - JSoup: http://jsoup.org/download
 - Apache Ant: https://ant.apache.org/bindownload.cgi
+- JDK: http://www.oracle.com/technetwork/java/javase/downloads/index.html
 
 ##Compiling
 1. Open src/com/achow101/bctalkaccountpricer/server/AccountPricer.java and change the strings in ACCOUNT_NAME and ACCOUNT_PASS to an actual working account username and password.
