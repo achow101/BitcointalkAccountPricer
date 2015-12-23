@@ -16,31 +16,20 @@
  ******************************************************************************/
 package com.achow101.bctalkaccountpricer.server;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.URL;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-
-import com.gargoylesoftware.htmlunit.CookieManager;
-import com.gargoylesoftware.htmlunit.WebClient;
-import com.gargoylesoftware.htmlunit.html.HtmlForm;
-import com.gargoylesoftware.htmlunit.html.HtmlPage;
-import com.gargoylesoftware.htmlunit.html.HtmlPasswordInput;
-import com.gargoylesoftware.htmlunit.html.HtmlSpan;
-import com.gargoylesoftware.htmlunit.html.HtmlSubmitInput;
-import com.gargoylesoftware.htmlunit.html.HtmlTextInput;
 
 public class AccountPricer {
 	
@@ -119,6 +108,7 @@ public class AccountPricer {
 		int postcount = 0;
 		int goodPosts = 0;
 		List<Section> postsSections = new ArrayList<Section>();
+		List<Address> addresses = new ArrayList<Address>();
 		
 		// get posts from each page of 20 posts
 		for(int i = 0; i < pages; i++)
@@ -191,6 +181,17 @@ public class AccountPricer {
 						goodPosts++;
 					postcount++;
 					
+					// Get the post URL
+					Element postURLElement = postHeader.select("td.middletext > a[href]").last();
+					String postURL = postURLElement.attr("href");
+					
+					// retrieve addresses in the text
+					Pattern pattern = Pattern.compile(" [13][a-km-zA-HJ-NP-Z0-9]{26,33} ");
+					Matcher matcher = pattern.matcher(postString);
+					while(matcher.find())
+					{
+						addresses.add(new Address(matcher.group(), postURL, dateStr));
+					}
 				}
 				
 				// wait so ip is not banned.
@@ -203,12 +204,21 @@ public class AccountPricer {
 			
 		}
 		
+		// Put addresses into a string array
+		String[] postedAddresses = new String[addresses.size() + 2];
+		postedAddresses[0] = "<b>Addresses posted in non-quoted text</b>";
+		postedAddresses[1] = "<b>(May inclue addresses not actually owned by user)</b>";
+		for(int i = 2; i < postedAddresses.length; i++)
+		{
+			postedAddresses[i] = addresses.get(i - 2).toString();
+		}
+		
 		// Put posts info into a string array
 		String[] postsBreakdown = new String[postsSections.size() + 1];
 		postsBreakdown[0] = "<b>Post Sections Breakdown</b>";
-		for(int i = 1; i < postsSections.size(); i++)
+		for(int i = 1; i < postsBreakdown.length; i++)
 		{
-			postsBreakdown[i] = postsSections.get(i).toString();
+			postsBreakdown[i] = postsSections.get(i - 1).toString();
 		}
 		
 		// Calculate potential activity, and number of posts in each two week period
@@ -326,6 +336,9 @@ public class AccountPricer {
 		
 		// Combine output with posts Breakdown
 		output = combineArrays(output, postsBreakdown);
+		
+		// Combine output with posted addresses
+		output = combineArrays(output, postedAddresses);
 		
 		return output;
 	}
@@ -545,6 +558,25 @@ public class AccountPricer {
 			// Add to array
 			return formattedStartDate + " - " + formattedEndDate + ": " + numPosts + " Posts" ;
 		
+		}
+	}
+	
+	private class Address
+	{
+		private String addr;
+		private String postURL;
+		private String postDate;
+		
+		public Address(String addr, String postURL, String postDate)
+		{
+			this.addr = addr;
+			this.postURL = postURL;
+			this.postDate = postDate;
+		}
+		
+		public String toString()
+		{
+			return "<a href=\"" + postURL + "\">" + addr + " Posted on: " + postDate + "</a>"; 
 		}
 	}
 }

@@ -109,6 +109,12 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 		final FlexTable postsTable = new FlexTable();
 		postsPanel.add(postsTable);
 		RootPanel.get("postsBreakdown").add(postsPanel);
+		
+		// Create addresses breakdown panel
+		final VerticalPanel addrPanel = new VerticalPanel();
+		final FlexTable addrTable = new FlexTable();
+		postsPanel.add(addrTable);
+		RootPanel.get("addrBreakdown").add(addrTable);
 
 		// Focus the cursor on the name field when the app loads
 		nameField.setFocus(true);
@@ -152,15 +158,7 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 				loadingLabel.setText("");
 				actTable.clear(true);
 				postsTable.clear(true);
-				/*for(int i = 0; i < actTable.getRowCount(); i++)
-				{
-					
-					actTable.setHTML(i, 0, "");
-				}
-				for(int i = 0; i < postsTable.getRowCount(); i++)
-				{
-					postsTable.setHTML(i, 0, "");
-				}*/
+				addrTable.clear(true);
 				
 				// validate input
 				if (!FieldVerifier.isValidName(nameField.getText())) {
@@ -275,6 +273,7 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 								trustLabel.setText(result[6]);
 								priceLabel.setText(result[7]);
 								int indexOfLastAct = 0;
+								int startAddrIndex = 0;
 								for(int i = 8; i < result.length; i++)
 								{
 									if(result[i].equals("<b>Post Sections Breakdown</b>"))
@@ -286,7 +285,16 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 								}
 								for(int i = indexOfLastAct; i < result.length; i++)
 								{
+									if(result[i].contains("<b>Addresses posted in non-quoted text</b>"))
+									{
+										startAddrIndex = i;
+										break;
+									}
 									postsTable.setHTML(i - indexOfLastAct, 0, result[i]);
+								}
+								for(int i = startAddrIndex; i < result.length; i++)
+								{
+									addrTable.setHTML(i - startAddrIndex, 0, result[i]);
 								}
 								
 								sendButton.setEnabled(true);
