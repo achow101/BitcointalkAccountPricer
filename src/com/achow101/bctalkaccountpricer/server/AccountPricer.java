@@ -190,7 +190,7 @@ public class AccountPricer {
 					String postURL = postURLElement.attr("href");
 					
 					// retrieve addresses in the text
-					Pattern pattern = Pattern.compile(" [13][a-km-zA-HJ-NP-Z0-9]{26,33} ");
+					Pattern pattern = Pattern.compile("[13][a-km-zA-HJ-NP-Z0-9]{26,33}");
 					Matcher matcher = pattern.matcher(postString);
 					while(matcher.find())
 					{
@@ -225,7 +225,7 @@ public class AccountPricer {
 		// Put addresses into a string array
 		String[] postedAddresses = new String[addresses.size() + 2];
 		postedAddresses[0] = "<b>Addresses posted in non-quoted text</b>";
-		postedAddresses[1] = "<b>(May inclue addresses not actually owned by user)</b>";
+		postedAddresses[1] = "<b>(May inclue addresses not actually owned by user or are invalid addresses)</b>";
 		for(int i = 2; i < postedAddresses.length; i++)
 		{
 			postedAddresses[i] = addresses.get(i - 2).toString();
