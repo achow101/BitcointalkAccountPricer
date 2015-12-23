@@ -16,15 +16,11 @@
  ******************************************************************************/
 package com.achow101.bctalkaccountpricer.server;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -238,7 +234,7 @@ public class AccountPricer {
 		// Put addresses into a string array
 		String[] postedAddresses = new String[addresses.size() + 2];
 		postedAddresses[0] = "<b>Addresses posted in non-quoted text</b>";
-		postedAddresses[1] = "<b>(May inclue addresses not actually owned by user or are invalid addresses)</b>";
+		postedAddresses[1] = "<b>(May inclue addresses not actually owned by user)</b>";
 		for(int i = 2; i < postedAddresses.length; i++)
 		{
 			postedAddresses[i] = addresses.get(i - 2).toString();
@@ -560,142 +556,4 @@ public class AccountPricer {
         System.arraycopy(b, 0, result, a.length, b.length);
         return result;
     }
-	
-	private class Section
-	{
-		private String name;
-		private int numPosts = 0;
-		
-		public Section(String name)
-		{
-			this.name = name;
-		}
-		
-		public void incrementPostCount()
-		{
-			numPosts++;
-		}
-		
-		public String getName()
-		{
-			return name;
-		}
-		
-		public String toString()
-		{
-			return name + ": " + numPosts + " Posts";
-		}
-	}
-	
-	private class ActivityDetail
-	{
-		private long startTimestamp;
-		private long endTimestamp;
-		private int numPosts;
-		
-		public ActivityDetail(long startTimestamp, long endTimestamp, int numPosts)
-		{
-			this.startTimestamp = startTimestamp;
-			this.endTimestamp = endTimestamp;
-			this.numPosts = numPosts;
-		}
-		
-		public String toString()
-		{
-			SimpleDateFormat sdf = new SimpleDateFormat("EEEE, MMMM d yyyy HH:mm:ss"); 
-			sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
-			
-			// Convert start timestamp to date
-			Date startDate = new Date(1000L*startTimestamp);
-			String formattedStartDate = sdf.format(startDate);
-			
-			// Convert end timestamp to date
-			String formattedEndDate = "";
-			if(endTimestamp == -1)
-			{
-				formattedEndDate = "Present";
-			}
-			else
-			{
-				Date endDate = new Date(1000L*endTimestamp);
-				formattedEndDate = sdf.format(endDate);
-			}
-			
-			// Add to array
-			return formattedStartDate + " - " + formattedEndDate + ": " + numPosts + " Posts" ;
-		
-		}
-	}
-	
-	private class Address
-	{
-		private String addr;
-		private String postURL;
-		private String postDate;
-		
-		public Address(String addr, String postURL, String postDate)
-		{
-			this.addr = addr;
-			this.postURL = postURL;
-			this.postDate = postDate;
-		}
-		
-		public String getAddr()
-		{
-			return addr;
-		}
-		
-		public void setDateURL(String postDate, String postURL)
-		{
-			this.postDate = postDate;
-			this.postURL = postURL;
-		}
-		
-		public boolean isValid()
-		{
-			if (addr.length() < 26 || addr.length() > 35) return false;
-		    byte[] decoded = DecodeBase58(addr, 58, 25);
-		    if (decoded == null) return false;
-		 
-		    byte[] hash = Sha256(decoded, 0, 21, 2);
-		 
-		    return Arrays.equals(Arrays.copyOfRange(hash, 0, 4), Arrays.copyOfRange(decoded, 21, 25));
-		}
-		
-		private byte[] DecodeBase58(String input, int base, int len) {
-			String alphabet = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
-			
-		    byte[] output = new byte[len];
-		    for (int i = 0; i < input.length(); i++) {
-		        char t = input.charAt(i);
-		 
-		        int p = alphabet.indexOf(t);
-		        if (p == -1) return null;
-		        for (int j = len - 1; j > 0; j--, p /= 256) {
-		            p += base * (output[j] & 0xFF);
-		            output[j] = (byte) (p % 256);
-		        }
-		        if (p != 0) return null;
-		    }
-		 
-		    return output;
-		}
-		 
-		private byte[] Sha256(byte[] data, int start, int len, int recursion) {
-		    if (recursion == 0) return data;
-		 
-		    try {
-		        MessageDigest md = MessageDigest.getInstance("SHA-256");
-		        md.update(Arrays.copyOfRange(data, start, start + len));
-		        return Sha256(md.digest(), 0, 32, recursion - 1);
-		    } catch (NoSuchAlgorithmException e) {
-		        return null;
-		    }
-		}
-		
-		public String toString()
-		{
-			return "<a href=\"" + postURL + "\">" + addr + " First posted on: " + postDate + "</a>"; 
-		}
-	}
 }
