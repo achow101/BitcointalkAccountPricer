@@ -24,3 +24,11 @@ Download the following and extract them to a directory if the download is compre
 3. Open a command window in apache-tomcat/bin and run 
 	startup
 4. Open a browser and go to http://localhost:8080/bctalkaccountpricer/
+
+##Running precompiled release
+1. Install Apache Tomcat and Java
+2. Download the latest release from https://github.com/achow101/BitcointalkAccountPricer/releases
+3. Copy the .war file to tomcat's webapps folder
+4. Open a command window in apache-tomcat/bin and run 
+	startup
+5. Open a browser and go to http://localhost:8080/bctalkaccountpricer/
