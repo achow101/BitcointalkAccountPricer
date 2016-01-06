@@ -106,7 +106,7 @@ public class PricingServiceImpl extends RemoteServiceServlet implements
 			{
 				if(!req.isProcessing())
 				{
-					// TODO: Send request to thread started in Config.java
+					// TODO: Send request to ProcessPricing thread
 				}
 				req.setProcessing(true);
 			}
@@ -139,4 +139,6 @@ public class PricingServiceImpl extends RemoteServiceServlet implements
 		}
 		return false;
 	}
+	
+	// TODO: Receive the completed request from ProcessPricing thread and add to completed and remove from waiting
 }

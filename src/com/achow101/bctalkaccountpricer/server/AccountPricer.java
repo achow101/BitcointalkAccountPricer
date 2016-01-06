@@ -42,9 +42,9 @@ public class AccountPricer {
 	
 	private int userId = 3;
 	
-	public AccountPricer(QueueRequest req)
+	public AccountPricer(int userId)
 	{
-		userId = req.getUid();
+		this.userId = userId;
 	}
 
 	public String[] getAccountData() {

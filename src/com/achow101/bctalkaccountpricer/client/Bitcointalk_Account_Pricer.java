@@ -171,7 +171,7 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 						
 						else
 						{
-							if(!result.isProcessing())
+							if(!result.isProcessing() && !result.isDone())
 							{
 								loadingLabel.setText("Please wait. You are number " + result.getQueuePos() + " in the queue.");
 							}
