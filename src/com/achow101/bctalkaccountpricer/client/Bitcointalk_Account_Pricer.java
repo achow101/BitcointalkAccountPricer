@@ -24,10 +24,6 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
-import com.google.gwt.event.logical.shared.CloseEvent;
-import com.google.gwt.event.logical.shared.CloseHandler;
-import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Label;
@@ -40,8 +36,7 @@ import com.google.gwt.user.client.ui.TextBox;
 public class Bitcointalk_Account_Pricer implements EntryPoint {
 	
 	//TODO: Prior to running this code, please remember to change the password in AccountPricer.java for accountbot.
-	
-	private boolean requestQueued = false;
+
 	private QueueRequest request;
 	
 	/**
@@ -140,101 +135,79 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 				request = new QueueRequest();
 				if(nameField.getText().matches("^[0-9]+$"))
 					request.setUid(Integer.parseInt(escapeHtml(nameField.getText())));
-				requestQueued = true;
 				
-				// request ping loop
-				Timer elaspedTimer = new Timer()
+				// send request to server
+				pricingService.queueServer(request, new AsyncCallback<QueueRequest>()
 				{
-					public void run()
-					{
-						pricingService.queueServer(request, new AsyncCallback<QueueRequest>()
-								{
 
-									@Override
-									public void onFailure(Throwable caught) {
-										errorLabel.setText("Request Queuing failed. Please try again.");
-										sendButton.setEnabled(true);
-										requestQueued = false;
-										pricingService.removeRequest(request, null);
-										cancel();
-										
-									}
+					@Override
+					public void onFailure(Throwable caught) {
+						errorLabel.setText("Request Queuing failed. Please try again.");
+						sendButton.setEnabled(true);
+						pricingService.removeRequest(request, null);
+						
+					}
 
-									@Override
-									public void onSuccess(QueueRequest result) {
-										
-										if(result.getQueuePos() == -3)
-										{
-											loadingLabel.setText("Please wait for your previous request to finish and try again");
-											sendButton.setEnabled(true);
-											requestQueued = false;
-											cancel();
-										}
-										
-										else if(result.getQueuePos() == -2)
-										{
-											loadingLabel.setText("Please wait 10 minutes before requesting again.");
-											sendButton.setEnabled(true);
-											requestQueued = false;
-											cancel();
-										}
-										
-										else if(result.getQueuePos() == -4)
-										{
-											loadingLabel.setText("Invalid token");
-											sendButton.setEnabled(true);
-											requestQueued = false;
-											cancel();
-										}
-										
-										else
-										{
-											if(!result.isProcessing())
-											{
-												loadingLabel.setText("Please wait. You are number " + result.getQueuePos() + " in the queue.");
-											}
-											if(result.isProcessing())
-											{
-												loadingLabel.setText("Request is processing. Please wait");
-											}
-											if(result.isDone())
-											{
-												cancel();
-												
-												// Clear other messages
-												errorLabel.setText("");
-												loadingLabel.setText("");
-												
-												// Output results
-												uidLabel.setText(result.getResult()[0]);
-												usernameLabel.setText(result.getResult()[1]);
-												postsLabel.setText(result.getResult()[2]);
-												activityLabel.setText(result.getResult()[3]);
-												potActivityLabel.setText(result.getResult()[4]);
-												postQualityLabel.setText(result.getResult()[5]);
-												trustLabel.setText(result.getResult()[6]);
-												priceLabel.setText(result.getResult()[7]);
-												sendButton.setEnabled(true);
-												requestQueued = false;
-											}
-											request = result;
-										}
-										
-									}
-							
-								});							
-						}				
-					
-					};
-					elaspedTimer.scheduleRepeating(2000);
-			}
+					@Override
+					public void onSuccess(QueueRequest result) {
+						
+						if(result.getQueuePos() == -3)
+						{
+							loadingLabel.setText("Please wait for your previous request to finish and try again");
+							sendButton.setEnabled(true);
+						}
+						
+						else if(result.getQueuePos() == -2)
+						{
+							loadingLabel.setText("Please wait 10 minutes before requesting again.");
+							sendButton.setEnabled(true);
+						}
+						
+						else if(result.getQueuePos() == -4)
+						{
+							loadingLabel.setText("Invalid token");
+							sendButton.setEnabled(true);
+						}
+						
+						else
+						{
+							if(!result.isProcessing())
+							{
+								loadingLabel.setText("Please wait. You are number " + result.getQueuePos() + " in the queue.");
+							}
+							if(result.isProcessing())
+							{
+								loadingLabel.setText("Request is processing. Please wait");
+							}
+							if(result.isDone())
+							{										
+								// Clear other messages
+								errorLabel.setText("");
+								loadingLabel.setText("");
+								
+								// Output results
+								uidLabel.setText(result.getResult()[0]);
+								usernameLabel.setText(result.getResult()[1]);
+								postsLabel.setText(result.getResult()[2]);
+								activityLabel.setText(result.getResult()[3]);
+								potActivityLabel.setText(result.getResult()[4]);
+								postQualityLabel.setText(result.getResult()[5]);
+								trustLabel.setText(result.getResult()[6]);
+								priceLabel.setText(result.getResult()[7]);
+								sendButton.setEnabled(true);
+							}
+							request = result;
+						}													
+					}
+				});
+
+			// Add a handler to send the name to the server
+			MyHandler handler = new MyHandler();
+			sendButton.addClickHandler(handler);
+			nameField.addKeyUpHandler(handler);
 		}
-		
-		// Add a handler to send the name to the server
-		MyHandler handler = new MyHandler();
-		sendButton.addClickHandler(handler);
-		nameField.addKeyUpHandler(handler);
 	}
+}
 	
 	private String escapeHtml(String html) {
 		if (html == null) {

@@ -21,8 +21,7 @@ public class Config implements ServletContextListener {
 
 	@Override
 	public void contextInitialized(ServletContextEvent arg0) {
-		// TODO Auto-generated method stub
-		
+		//TODO: Start processing thread Async
 	}
 
 }

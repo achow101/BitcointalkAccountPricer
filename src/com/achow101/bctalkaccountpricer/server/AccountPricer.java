@@ -23,7 +23,6 @@ import java.net.URL;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.List;
 
 import com.achow101.bctalkaccountpricer.shared.QueueRequest;
 import com.gargoylesoftware.htmlunit.CookieManager;
@@ -35,33 +34,17 @@ import com.gargoylesoftware.htmlunit.html.HtmlSpan;
 import com.gargoylesoftware.htmlunit.html.HtmlSubmitInput;
 import com.gargoylesoftware.htmlunit.html.HtmlTextInput;
 
-public class AccountPricer implements Runnable {
+public class AccountPricer {
 	
 	// TODO: Change password before compiling
 	final String ACCOUNT_NAME = "accountbot";
 	final String ACCOUNT_PASS = "NOT THE RIGHT PASSWORD";
 	
-	int userId = 3;
-	private String token;
-	private AccountPricerCallback c;
+	private int userId = 3;
 	
-	interface AccountPricerCallback {
-		void onDataRequestComplete(String[] result, String token);
-		void setRequestProcessing(boolean processing, String token);
-	}
-	
-	public AccountPricer(int uid, String token, AccountPricerCallback c)
+	public AccountPricer(QueueRequest req)
 	{
-		userId = uid;
-		this.token = token;
-		this.c = c;
-	}
-	
-	public void run()
-	{
-		c.setRequestProcessing(true, token);
-		c.onDataRequestComplete(getAccountData(), token);
-		c.setRequestProcessing(false, token);
+		userId = req.getUid();
 	}
 
 	public String[] getAccountData() {

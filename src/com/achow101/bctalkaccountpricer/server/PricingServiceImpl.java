@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.achow101.bctalkaccountpricer.client.PricingService;
-import com.achow101.bctalkaccountpricer.server.AccountPricer.AccountPricerCallback;
 import com.achow101.bctalkaccountpricer.shared.QueueRequest;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
@@ -32,14 +31,12 @@ import com.google.gwt.user.server.rpc.RemoteServiceServlet;
  */
 @SuppressWarnings("serial")
 public class PricingServiceImpl extends RemoteServiceServlet implements
-		PricingService, AccountPricerCallback {
+		PricingService {
 	
-	public static List<QueueRequest> requestList = Config.requestList;
-	public static List<QueueRequest> ipWait = Config.ipWait;
+	public static List<QueueRequest> waitingRequests = new ArrayList<QueueRequest>();
+	public static List<QueueRequest> completedRequests = new ArrayList<QueueRequest>();
 
 	private static SecureRandom random = new SecureRandom();
-
-	
 
 	@Override
 	public QueueRequest queueServer(QueueRequest request)
@@ -59,13 +56,14 @@ public class PricingServiceImpl extends RemoteServiceServlet implements
 				request.setToken("NO TOKEN");
 			}
 			
-			// Check if Ip needs to wait
-			for(QueueRequest req : ipWait)
+			for(QueueRequest req : completedRequests)
 			{
+				// If request is done
 				if(req.getToken().equals(request.getToken()))
 				{
 					return req;
 				}
+				// Check if Ip needs to wait
 				else if(req.getIp().equals(request.getIp()) && request.getTime() - req.getTime() <= 600)
 				{
 					request.setQueuePos(-2);
@@ -73,8 +71,9 @@ public class PricingServiceImpl extends RemoteServiceServlet implements
 				}
 			}
 			
-			for(QueueRequest req : requestList)
+			for(QueueRequest req : waitingRequests)
 			{
+				// If still processing request
 				if(req.getToken().equals(request.getToken()))
 				{
 					return req;
@@ -88,46 +87,32 @@ public class PricingServiceImpl extends RemoteServiceServlet implements
 			}
 			
 			request.setOldReq();
-			request.setGo(false);
-			requestList.add(request);
+			waitingRequests.add(request);
 			
 			// add the token
 			request.setToken(new BigInteger(130, random).toString(32));
 		}
 		
-		if(request.getQueuePos() == 0 && requestList.indexOf(request) == 0)
+		for(QueueRequest req : waitingRequests)
 		{
-			request.setGo(true);
-		}
-		if(request.getQueuePos() == -1)
-		{
-			requestList.remove(request);
-		}
-		
-		for(QueueRequest req : requestList)
-		{
-			
 			// Remove -1 position requests
 			if(req.getQueuePos() == -1)
 			{
-				requestList.remove(req);
+				waitingRequests.remove(req);
 			}
 			
 			// Set first request to go
-			if(req.getQueuePos() == 0 && requestList.indexOf(req) == 0)
+			if(req.getQueuePos() == 0 && waitingRequests.indexOf(req) == 0)
 			{
-				req.setGo(true);
 				if(!req.isProcessing())
 				{
-					// TODO: Get pricer to somehow pass the data back to static list from its thread
-					AccountPricer pricer = new AccountPricer(req.getUid(), req.getToken(), this);
-					Thread thread = new Thread(pricer);
-					thread.start();
+					// TODO: Send request to thread started in Config.java
 				}
+				req.setProcessing(true);
 			}
 			
 			// Set position of request to position in list
-			req.setQueuePos(requestList.indexOf(req));
+			req.setQueuePos(waitingRequests.indexOf(req));
 			
 			// Set request to return to match actual request in list
 			if(req.getIp().equals(request.getIp()) && req.getTime() == request.getTime())
@@ -141,46 +126,17 @@ public class PricingServiceImpl extends RemoteServiceServlet implements
 
 	@Override
 	public boolean removeRequest(QueueRequest request){
-		for(QueueRequest req : requestList)
+		for(QueueRequest req : waitingRequests)
 		{
 			if(req.getToken().equals(request.getToken()))
 			{
-				requestList.remove(req);
+				waitingRequests.remove(req);
 				request.setTime(System.currentTimeMillis() / 1000L);
-				ipWait.add(request);
+				completedRequests.add(request);
 				return true;
 			}
 			
 		}
 		return false;
-	}
-
-	@Override
-	public synchronized void onDataRequestComplete(String[] result, String token) {
-		for(QueueRequest req : requestList)
-		{
-			if(req.getToken().equals(token))
-			{
-				req.setDone(true);
-				req.setResult(result);
-				req.setTime(System.currentTimeMillis() / 1000L);
-				requestList.remove(req);
-				ipWait.add(req);
-			}
-			
-		}		
-	}
-
-	@Override
-	public synchronized void setRequestProcessing(boolean processing, String token) {
-		for(QueueRequest req : requestList)
-		{
-			if(req.getToken().equals(token))
-			{
-				req.setProcessing(processing);
-			}
-			
-		}	
-		
 	}
 }
