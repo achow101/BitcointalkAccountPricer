@@ -20,6 +20,8 @@ import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import com.achow101.bctalkaccountpricer.client.PricingService;
 import com.achow101.bctalkaccountpricer.shared.QueueRequest;
@@ -31,10 +33,13 @@ import com.google.gwt.user.server.rpc.RemoteServiceServlet;
  */
 @SuppressWarnings("serial")
 public class PricingServiceImpl extends RemoteServiceServlet implements
-		PricingService {
+		PricingService, Runnable {
 	
 	public static List<QueueRequest> waitingRequests = new ArrayList<QueueRequest>();
 	public static List<QueueRequest> completedRequests = new ArrayList<QueueRequest>();
+
+	private static BlockingQueue<QueueRequest> requestsToProcess = Config.requestsToProcess;
+	private static BlockingQueue<QueueRequest> processedRequests = Config.processedRequests;
 
 	private static SecureRandom random = new SecureRandom();
 
@@ -78,16 +83,22 @@ public class PricingServiceImpl extends RemoteServiceServlet implements
 				{
 					return req;
 				}
-				// Check if ip already requested
+				/*// Check if ip already requested
 				else if(req.getIp().equals(request.getIp()))
 				{
 					request.setQueuePos(-3);
 					return request;
-				}
+				}*/
 			}
 			
 			request.setOldReq();
 			waitingRequests.add(request);
+			try {
+				requestsToProcess.put(request);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 			
 			// add the token
 			request.setToken(new BigInteger(130, random).toString(32));
@@ -104,10 +115,6 @@ public class PricingServiceImpl extends RemoteServiceServlet implements
 			// Set first request to go
 			if(req.getQueuePos() == 0 && waitingRequests.indexOf(req) == 0)
 			{
-				if(!req.isProcessing())
-				{
-					// TODO: Send request to ProcessPricing thread
-				}
 				req.setProcessing(true);
 			}
 			
@@ -140,5 +147,14 @@ public class PricingServiceImpl extends RemoteServiceServlet implements
 		return false;
 	}
 	
-	// TODO: Receive the completed request from ProcessPricing thread and add to completed and remove from waiting
+	public void run()
+	{
+		try {
+			QueueRequest req = processedRequests.take();
+			removeRequest(req);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 }

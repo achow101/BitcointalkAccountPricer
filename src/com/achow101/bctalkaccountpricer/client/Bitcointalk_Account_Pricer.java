@@ -135,6 +135,11 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 				request = new QueueRequest();
 				if(nameField.getText().matches("^[0-9]+$"))
 					request.setUid(Integer.parseInt(escapeHtml(nameField.getText())));
+				else
+				{
+					request.setToken(escapeHtml(nameField.getText()));
+					request.setOldReq();
+				}
 				
 				// send request to server
 				pricingService.queueServer(request, new AsyncCallback<QueueRequest>()
@@ -173,11 +178,11 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 						{
 							if(!result.isProcessing() && !result.isDone())
 							{
-								loadingLabel.setText("Please wait. You are number " + result.getQueuePos() + " in the queue.");
+								loadingLabel.setText("Please wait. Your token is " + result.getToken() + " and you are number " + result.getQueuePos() + " in the queue.");
 							}
 							if(result.isProcessing())
 							{
-								loadingLabel.setText("Request is processing. Please wait");
+								loadingLabel.setText("Request is processing. Please wait. Your token is " + result.getToken());
 							}
 							if(result.isDone())
 							{										
@@ -194,19 +199,19 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 								postQualityLabel.setText(result.getResult()[5]);
 								trustLabel.setText(result.getResult()[6]);
 								priceLabel.setText(result.getResult()[7]);
-								sendButton.setEnabled(true);
 							}
 							request = result;
+							sendButton.setEnabled(true);
 						}													
 					}
 				});
-
-			// Add a handler to send the name to the server
-			MyHandler handler = new MyHandler();
-			sendButton.addClickHandler(handler);
-			nameField.addKeyUpHandler(handler);
-		}
+		}			
 	}
+
+	// Add a handler to send the name to the server
+	MyHandler handler = new MyHandler();
+	sendButton.addClickHandler(handler);
+	nameField.addKeyUpHandler(handler);
 }
 	
 	private String escapeHtml(String html) {
