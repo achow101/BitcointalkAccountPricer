@@ -91,6 +91,15 @@ public class PricingServiceImpl extends RemoteServiceServlet implements
 				}*/
 			}
 			
+			for(QueueRequest req : completedRequests)
+			{
+				// Get the right one that is done
+				if(req.getToken().equals(request.getToken()))
+				{
+					return req;
+				}
+			}
+			
 			request.setOldReq();
 			waitingRequests.add(request);
 			try {
@@ -122,7 +131,7 @@ public class PricingServiceImpl extends RemoteServiceServlet implements
 			req.setQueuePos(waitingRequests.indexOf(req));
 			
 			// Set request to return to match actual request in list
-			if(req.getIp().equals(request.getIp()) && req.getTime() == request.getTime())
+			if(req.getToken().equals(request.getToken()))
 			{
 				request = req;
 			}

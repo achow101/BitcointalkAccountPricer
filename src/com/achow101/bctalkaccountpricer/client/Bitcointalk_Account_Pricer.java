@@ -29,6 +29,7 @@ import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.Timer;
 
 /**
  * Entry point classes define <code>onModuleLoad()</code>.
@@ -72,6 +73,7 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 		final Label trustLabel = new Label();
 		final Label priceLabel = new Label();
 		final Label loadingLabel = new Label();
+		final Label tokenLabel = new Label();
 
 		// We can add style names to widgets
 		sendButton.addStyleName("sendButton");
@@ -89,6 +91,7 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 		RootPanel.get("trustLabelContainer").add(trustLabel);
 		RootPanel.get("priceLabelContainer").add(priceLabel);
 		RootPanel.get("loadingLabelContainer").add(loadingLabel);
+		RootPanel.get("tokenLabelContainer").add(tokenLabel);
 
 		// Focus the cursor on the name field when the app loads
 		nameField.setFocus(true);
@@ -141,70 +144,79 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 					request.setOldReq();
 				}
 				
-				// send request to server
-				pricingService.queueServer(request, new AsyncCallback<QueueRequest>()
+				// Request check loop
+				Timer elapsedTimer = new Timer()
 				{
+					public void run()
+					{
+						// send request to server
+						pricingService.queueServer(request, new AsyncCallback<QueueRequest>()
+						{
 
-					@Override
-					public void onFailure(Throwable caught) {
-						errorLabel.setText("Request Queuing failed. Please try again.");
-						sendButton.setEnabled(true);
-						pricingService.removeRequest(request, null);
-						
-					}
-
-					@Override
-					public void onSuccess(QueueRequest result) {
-						
-						if(result.getQueuePos() == -3)
-						{
-							loadingLabel.setText("Please wait for your previous request to finish and try again");
-							sendButton.setEnabled(true);
-						}
-						
-						else if(result.getQueuePos() == -2)
-						{
-							loadingLabel.setText("Please wait 10 minutes before requesting again.");
-							sendButton.setEnabled(true);
-						}
-						
-						else if(result.getQueuePos() == -4)
-						{
-							loadingLabel.setText("Invalid token");
-							sendButton.setEnabled(true);
-						}
-						
-						else
-						{
-							if(!result.isProcessing() && !result.isDone())
-							{
-								loadingLabel.setText("Please wait. Your token is " + result.getToken() + " and you are number " + result.getQueuePos() + " in the queue.");
-							}
-							if(result.isProcessing())
-							{
-								loadingLabel.setText("Request is processing. Please wait. Your token is " + result.getToken());
-							}
-							if(result.isDone())
-							{										
-								// Clear other messages
-								errorLabel.setText("");
-								loadingLabel.setText("");
+							@Override
+							public void onFailure(Throwable caught) {
+								errorLabel.setText("Request Queuing failed. Please try again.");
+								sendButton.setEnabled(true);
+								pricingService.removeRequest(request, null);
 								
-								// Output results
-								uidLabel.setText(result.getResult()[0]);
-								usernameLabel.setText(result.getResult()[1]);
-								postsLabel.setText(result.getResult()[2]);
-								activityLabel.setText(result.getResult()[3]);
-								potActivityLabel.setText(result.getResult()[4]);
-								postQualityLabel.setText(result.getResult()[5]);
-								trustLabel.setText(result.getResult()[6]);
-								priceLabel.setText(result.getResult()[7]);
 							}
-							request = result;
-							sendButton.setEnabled(true);
-						}													
+
+							@Override
+							public void onSuccess(QueueRequest result) {
+								
+								if(result.getQueuePos() == -3)
+								{
+									loadingLabel.setText("Please wait for your previous request to finish and try again");
+									sendButton.setEnabled(true);
+								}
+								
+								else if(result.getQueuePos() == -2)
+								{
+									loadingLabel.setText("Please wait 10 minutes before requesting again.");
+									sendButton.setEnabled(true);
+								}
+								
+								else if(result.getQueuePos() == -4)
+								{
+									loadingLabel.setText("Invalid token");
+									sendButton.setEnabled(true);
+								}
+								
+								else
+								{
+									tokenLabel.setText("Your token is " + result.getToken());
+									if(!result.isProcessing() && !result.isDone())
+									{
+										loadingLabel.setText("Please wait. You are number " + result.getQueuePos() + " in the queue.");
+									}
+									if(result.isProcessing())
+									{
+										loadingLabel.setText("Request is processing. Please wait.");
+									}
+									if(result.isDone())
+									{										
+										// Clear other messages
+										errorLabel.setText("");
+										loadingLabel.setText("");
+										
+										// Output results
+										uidLabel.setText(result.getResult()[0]);
+										usernameLabel.setText(result.getResult()[1]);
+										postsLabel.setText(result.getResult()[2]);
+										activityLabel.setText(result.getResult()[3]);
+										potActivityLabel.setText(result.getResult()[4]);
+										postQualityLabel.setText(result.getResult()[5]);
+										trustLabel.setText(result.getResult()[6]);
+										priceLabel.setText(result.getResult()[7]);
+									}
+									request = result;
+									sendButton.setEnabled(true);
+								}													
+							}
+						});
 					}
-				});
+				};
+				elapsedTimer.scheduleRepeating(2000);
 		}			
 	}
 

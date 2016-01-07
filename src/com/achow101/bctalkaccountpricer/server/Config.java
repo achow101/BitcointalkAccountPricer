@@ -22,6 +22,7 @@ public class Config implements ServletContextListener {
 	@Override
 	public void contextInitialized(ServletContextEvent arg0) {
 		(new Thread(new ProcessPricing())).start();
+		(new Thread(new PricingServiceImpl())).start();
 	}
 
 }

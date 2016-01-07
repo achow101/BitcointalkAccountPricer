@@ -32,6 +32,10 @@
     <url-pattern>/bitcointalk_account_pricer/pricing</url-pattern>
   </servlet-mapping>
   
+  <listener>
+       <listener-class>com.achow101.bctalkaccountpricer.server.Config</listener-class>
+  </listener>
+  
   <!-- Default page to serve -->
   <welcome-file-list>
     <welcome-file>Bitcointalk_Account_Pricer.html</welcome-file>
