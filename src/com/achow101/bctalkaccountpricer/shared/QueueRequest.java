@@ -3,11 +3,9 @@ package com.achow101.bctalkaccountpricer.shared;
 import java.io.Serializable;
 
 public class QueueRequest implements Serializable{
-	
-	/**
-	 * 
-	 */
+
 	private static final long serialVersionUID = -1012714783248122922L;
+	private boolean go = false;
 	private int pos = 0;
 	private boolean newRequest = true;
 	private String ip;
@@ -17,6 +15,18 @@ public class QueueRequest implements Serializable{
 	private int uid = 0;
 	private boolean processing = false;
 	private boolean done = false;
+	
+	public QueueRequest(){}
+	
+	public boolean getGo()
+	{
+		return go;
+	}
+	
+	public void setGo(boolean goNoGo)
+	{
+		go = goNoGo;
+	}
 	
 	public int getQueuePos()
 	{

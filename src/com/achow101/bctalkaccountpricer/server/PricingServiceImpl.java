@@ -21,7 +21,6 @@ import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 
 import com.achow101.bctalkaccountpricer.client.PricingService;
 import com.achow101.bctalkaccountpricer.shared.QueueRequest;
@@ -69,7 +68,8 @@ public class PricingServiceImpl extends RemoteServiceServlet implements
 					return req;
 				}
 				// Check if Ip needs to wait
-				else if(req.getIp().equals(request.getIp()) && request.getTime() - req.getTime() <= 600)
+				// TODO: Remove negative before publishing!
+				if(req.getIp().equals(request.getIp()) && request.getTime() - req.getTime() <= -120)
 				{
 					request.setQueuePos(-2);
 					return request;
@@ -84,7 +84,7 @@ public class PricingServiceImpl extends RemoteServiceServlet implements
 					return req;
 				}
 				/*// Check if ip already requested
-				else if(req.getIp().equals(request.getIp()))
+				if(req.getIp().equals(request.getIp()))
 				{
 					request.setQueuePos(-3);
 					return request;
@@ -99,8 +99,11 @@ public class PricingServiceImpl extends RemoteServiceServlet implements
 					return req;
 				}
 			}
-			
+
+			// add the token
+			request.setToken(new BigInteger(130, random).toString(32));
 			request.setOldReq();
+			request.setGo(false);
 			waitingRequests.add(request);
 			try {
 				requestsToProcess.put(request);
@@ -108,9 +111,6 @@ public class PricingServiceImpl extends RemoteServiceServlet implements
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			
-			// add the token
-			request.setToken(new BigInteger(130, random).toString(32));
 		}
 		
 		for(QueueRequest req : waitingRequests)
