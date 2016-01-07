@@ -11,22 +11,30 @@ public class ProcessPricing implements Runnable {
 	
 	public void run()
 	{
-		try {
-			// Get request from PricingServiceImpl thread
-			QueueRequest req = requestsToProcess.take();
-			req.setProcessing(true);
-			
-			// Price the request
-			AccountPricer pricer = new AccountPricer(req.getUid());
-			req.setResult(pricer.getAccountData());
-			req.setDone(true);
-			
-			//Pass the data back to PricingServiceImpl thread
-			processedRequests.put(req);
+		System.out.println("Starting ProcessPricing thread for processing the requests");
 		
-		} catch (InterruptedException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
+		// Infinte loop so that it runs indefinitely
+		while(true)
+		{
+			try {
+				// Get request from PricingServiceImpl thread
+				QueueRequest req = requestsToProcess.take();
+				System.out.println("Processing request " + req.getToken());
+				req.setProcessing(true);
+				
+				// Price the request
+				AccountPricer pricer = new AccountPricer(req.getUid());
+				req.setResult(pricer.getAccountData());
+				req.setDone(true);
+				System.out.println("Completed processing request " + req.getToken());
+				
+				//Pass the data back to PricingServiceImpl thread
+				processedRequests.put(req);
+			
+			} catch (InterruptedException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
 		}
 	}
 }

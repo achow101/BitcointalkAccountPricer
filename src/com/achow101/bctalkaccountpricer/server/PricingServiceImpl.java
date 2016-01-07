@@ -101,12 +101,13 @@ public class PricingServiceImpl extends RemoteServiceServlet implements
 			}
 
 			// add the token
-			request.setToken(new BigInteger(130, random).toString(32));
+			request.setToken(new BigInteger(64, random).toString(32));
 			request.setOldReq();
 			request.setGo(false);
 			waitingRequests.add(request);
 			try {
 				requestsToProcess.put(request);
+				System.out.println("Added request " + request.getToken() + " to queue.");
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -135,7 +136,15 @@ public class PricingServiceImpl extends RemoteServiceServlet implements
 			{
 				request = req;
 			}
-			
+		}
+		
+		for(QueueRequest req : completedRequests)
+		{
+			// Get the right one that is done
+			if(req.getToken().equals(request.getToken()))
+			{
+				return req;
+			}
 		}
 		return request;
 	}
@@ -147,8 +156,10 @@ public class PricingServiceImpl extends RemoteServiceServlet implements
 			if(req.getToken().equals(request.getToken()))
 			{
 				waitingRequests.remove(req);
+				System.out.println("Removed request " + req.getToken() + " from queue");
 				request.setTime(System.currentTimeMillis() / 1000L);
 				completedRequests.add(request);
+				System.out.println("Adding request " + req.getToken() + " to completed request list");
 				return true;
 			}
 			
@@ -158,12 +169,18 @@ public class PricingServiceImpl extends RemoteServiceServlet implements
 	
 	public void run()
 	{
-		try {
-			QueueRequest req = processedRequests.take();
-			removeRequest(req);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		System.out.println("Starting PricingServiceImpl thread for receiving processed requests");
+		
+		// Loop infintely to get processed requests
+		while(true)
+		{
+			try {
+				QueueRequest req = processedRequests.take();
+				removeRequest(req);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
 }

@@ -65,7 +65,7 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 		// Add Gui stuff		
 		final Button sendButton = new Button("Estimate Price");
 		final TextBox nameField = new TextBox();
-		nameField.setText("User ID");
+		nameField.setText("User ID/Token");
 		final Label errorLabel = new Label();
 		final Label uidLabel = new Label();
 		final Label usernameLabel = new Label();
@@ -157,12 +157,6 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 				actTable.clear(true);
 				postsTable.clear(true);
 				addrTable.clear(true);
-				
-				// validate input
-				if (!FieldVerifier.isValidName(nameField.getText())) {
-					errorLabel.setText("User ID must only be numbers");
-					return;
-				}
 				
 				// Create and add request
 				request = new QueueRequest();
@@ -261,10 +255,12 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 											{
 												addrTable.setHTML(i - startAddrIndex, 0, result.getResult()[i]);
 											}
-											
-											sendButton.setEnabled(true);
+
+											// Kill the timer after everything is done
+											cancel();
 										}
-									}													
+										request = result;
+										sendButton.setEnabled(true);									}													
 								}
 							});
 						}

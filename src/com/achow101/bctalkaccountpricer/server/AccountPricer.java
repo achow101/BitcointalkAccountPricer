@@ -99,7 +99,7 @@ public class AccountPricer {
 		
 		// get number of pages
 		int pages = posts / 20;
-		if((posts + 1) % 20 != 0)
+		if(posts % 20 != 0)
 			pages++;
 		
 		// other vars
