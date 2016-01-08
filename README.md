@@ -8,12 +8,12 @@ of Bitcointalk Forum Accounts. It will be updated to reflect the market frequent
 ##Algorithm
 Below is the algorithm used to determine the price of an account
 
-    0.00075 btc/activity
-    0.000375 btc/epa (extra potential activity)
+    0.0003 btc/activity
+    0.00015 btc/epa (extra potential activity)
     
     epa = potential activity - activity
     
-    bp (base price) = 0.0006 * activity + 0.0003 * epa
+    bp (base price) = 0.0003 * activity + 0.00015 * epa
     
     final price = bp * pqm * tm
     
