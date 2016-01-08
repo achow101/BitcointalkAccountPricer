@@ -16,11 +16,13 @@
  ******************************************************************************/
 package com.achow101.bctalkaccountpricer.server;
 
+import java.math.BigInteger;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
 
 import com.achow101.bctalkaccountpricer.client.PricingService;
-import com.achow101.bctalkaccountpricer.shared.FieldVerifier;
 import com.achow101.bctalkaccountpricer.shared.QueueRequest;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
@@ -30,54 +32,15 @@ import com.google.gwt.user.server.rpc.RemoteServiceServlet;
  */
 @SuppressWarnings("serial")
 public class PricingServiceImpl extends RemoteServiceServlet implements
-		PricingService {
+		PricingService, Runnable {
 	
-	public static List<QueueRequest> requestList = new ArrayList<QueueRequest>();
-	public static List<QueueRequest> ipWait = new ArrayList<QueueRequest>();
+	public static List<QueueRequest> waitingRequests = new ArrayList<QueueRequest>();
+	public static List<QueueRequest> completedRequests = new ArrayList<QueueRequest>();
 
-	public String[] pricingServer(String input, QueueRequest request) throws IllegalArgumentException {
-		// Verify that the input is valid. 
-		if (!FieldVerifier.isValidName(input)) {
-			// If the input is not valid, throw an IllegalArgumentException back to
-			// the client.
-			throw new IllegalArgumentException(
-					"User ID must only be numbers");
-		}
-		
-		System.out.println("Num Requests: " + requestList.size());
+	private static BlockingQueue<QueueRequest> requestsToProcess = Config.requestsToProcess;
+	private static BlockingQueue<QueueRequest> processedRequests = Config.processedRequests;
 
-		// Escape data from the client to avoid cross-site script vulnerabilities.
-		input = escapeHtml(input);
-		
-		// get UserID
-		int uid = Integer.parseInt(input);
-		
-		// Create pricer object
-		AccountPricer pricer = new AccountPricer(uid);
-		
-		// Create output array
-		String[] out = pricer.getAccountData();
-		
-		// Remove request from list
-		removeRequest(request);
-		
-		return out;
-	}
-
-	/**3
-	 * Escape an html string. Escaping data received from the client helps to
-	 * prevent cross-site script vulnerabilities.
-	 * 
-	 * @param html the html string to escape
-	 * @return the escaped string
-	 */
-	private String escapeHtml(String html) {
-		if (html == null) {
-			return null;
-		}
-		return html.replaceAll("&", "&amp;").replaceAll("<", "&lt;")
-				.replaceAll(">", "&gt;");
-	}
+	private static SecureRandom random = new SecureRandom();
 
 	@Override
 	public QueueRequest queueServer(QueueRequest request)
@@ -87,10 +50,24 @@ public class PricingServiceImpl extends RemoteServiceServlet implements
 			// Set remaining fields
 			request.setIp(getThreadLocalRequest().getRemoteAddr());
 			request.setTime(System.currentTimeMillis() / 1000L);
-			
-			// Check if Ip needs to wait
-			for(QueueRequest req : ipWait)
+			if(request.getToken() == null && request.getUid() == 0)
 			{
+				request.setQueuePos(-4);
+				return request;
+			}
+			else if(request.getToken() == null)
+			{
+				request.setToken("NO TOKEN");
+			}
+			
+			for(QueueRequest req : completedRequests)
+			{
+				// If request is done
+				if(req.getToken().equals(request.getToken()))
+				{
+					return req;
+				}
+				// Check if Ip needs to wait
 				// TODO: Remove negative before publishing!
 				if(req.getIp().equals(request.getIp()) && request.getTime() - req.getTime() <= -120)
 				{
@@ -99,67 +76,90 @@ public class PricingServiceImpl extends RemoteServiceServlet implements
 				}
 			}
 			
-			for(QueueRequest req : requestList)
+			for(QueueRequest req : waitingRequests)
 			{
-				// Check if ip already requested
+				// If still processing request
+				if(req.getToken().equals(request.getToken()))
+				{
+					return req;
+				}
+				/*// Check if ip already requested
 				if(req.getIp().equals(request.getIp()))
 				{
 					request.setQueuePos(-3);
 					return request;
-				}
+				}*/
 			}
 			
+			for(QueueRequest req : completedRequests)
+			{
+				// Get the right one that is done
+				if(req.getToken().equals(request.getToken()))
+				{
+					return req;
+				}
+			}
+
+			// add the token
+			request.setToken(new BigInteger(64, random).toString(32));
 			request.setOldReq();
 			request.setGo(false);
-			requestList.add(request);
+			waitingRequests.add(request);
+			try {
+				requestsToProcess.put(request);
+				System.out.println("Added request " + request.getToken() + " to queue.");
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 		
-		if(request.getQueuePos() == 0 && requestList.indexOf(request) == 0)
+		for(QueueRequest req : waitingRequests)
 		{
-			request.setGo(true);
-		}
-		if(request.getQueuePos() == -1)
-		{
-			requestList.remove(request);
-		}
-		
-		for(QueueRequest req : requestList)
-		{
-			
 			// Remove -1 position requests
 			if(req.getQueuePos() == -1)
 			{
-				requestList.remove(req);
+				waitingRequests.remove(req);
 			}
 			
 			// Set first request to go
-			if(req.getQueuePos() == 0 && requestList.indexOf(req) == 0)
+			if(req.getQueuePos() == 0 && waitingRequests.indexOf(req) == 0)
 			{
-				req.setGo(true);
+				req.setProcessing(true);
 			}
 			
 			// Set position of request to position in list
-			req.setQueuePos(requestList.indexOf(req));
+			req.setQueuePos(waitingRequests.indexOf(req));
 			
 			// Set request to return to match actual request in list
-			if(req.getIp().equals(request.getIp()) && req.getTime() == request.getTime())
+			if(req.getToken().equals(request.getToken()))
 			{
 				request = req;
 			}
-			
+		}
+		
+		for(QueueRequest req : completedRequests)
+		{
+			// Get the right one that is done
+			if(req.getToken().equals(request.getToken()))
+			{
+				return req;
+			}
 		}
 		return request;
 	}
 
 	@Override
 	public boolean removeRequest(QueueRequest request){
-		for(QueueRequest req : requestList)
+		for(QueueRequest req : waitingRequests)
 		{
-			if(req.getIp().equals(request.getIp()) && req.getTime() == request.getTime())
+			if(req.getToken().equals(request.getToken()))
 			{
-				requestList.remove(req);
+				waitingRequests.remove(req);
+				System.out.println("Removed request " + req.getToken() + " from queue");
 				request.setTime(System.currentTimeMillis() / 1000L);
-				ipWait.add(request);
+				completedRequests.add(request);
+				System.out.println("Adding request " + req.getToken() + " to completed request list");
 				return true;
 			}
 			
@@ -167,13 +167,19 @@ public class PricingServiceImpl extends RemoteServiceServlet implements
 		return false;
 	}
 	
-	private void removeOldIPWaits()
+	public void run()
 	{
-		for(QueueRequest req : ipWait)
+		System.out.println("Starting PricingServiceImpl thread for receiving processed requests");
+		
+		// Loop infintely to get processed requests
+		while(true)
 		{
-			if((System.currentTimeMillis() / 1000L) - req.getTime() >= 300)
-			{
-				ipWait.remove(req);
+			try {
+				QueueRequest req = processedRequests.take();
+				removeRequest(req);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
 		}
 	}

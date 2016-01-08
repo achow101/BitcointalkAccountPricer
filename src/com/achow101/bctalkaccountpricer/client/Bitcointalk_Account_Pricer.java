@@ -25,16 +25,13 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
-import com.google.gwt.event.logical.shared.CloseEvent;
-import com.google.gwt.event.logical.shared.CloseHandler;
-import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
 /**
@@ -43,8 +40,7 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 public class Bitcointalk_Account_Pricer implements EntryPoint {
 	
 	//TODO: Prior to running this code, please remember to change the password in AccountPricer.java for accountbot.
-	
-	private boolean requestQueued = false;
+
 	private QueueRequest request;
 	
 	/**
@@ -69,7 +65,7 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 		// Add Gui stuff		
 		final Button sendButton = new Button("Estimate Price");
 		final TextBox nameField = new TextBox();
-		nameField.setText("User ID");
+		nameField.setText("User ID/Token");
 		final Label errorLabel = new Label();
 		final Label uidLabel = new Label();
 		final Label usernameLabel = new Label();
@@ -80,6 +76,7 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 		final Label trustLabel = new Label();
 		final Label priceLabel = new Label();
 		final Label loadingLabel = new Label();
+		final Label tokenLabel = new Label();
 
 		// We can add style names to widgets
 		sendButton.addStyleName("sendButton");
@@ -97,6 +94,7 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 		RootPanel.get("trustLabelContainer").add(trustLabel);
 		RootPanel.get("priceLabelContainer").add(priceLabel);
 		RootPanel.get("loadingLabelContainer").add(loadingLabel);
+		RootPanel.get("tokenLabelContainer").add(tokenLabel);
 		
 		// Create activity breakdown panel
 		final VerticalPanel actPanel = new VerticalPanel();
@@ -160,189 +158,129 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 				postsTable.clear(true);
 				addrTable.clear(true);
 				
-				// validate input
-				if (!FieldVerifier.isValidName(nameField.getText())) {
-					errorLabel.setText("User ID must only be numbers");
-					return;
-				}
-				
 				// Create and add request
 				request = new QueueRequest();
-				requestQueued = true;
+				if(nameField.getText().matches("^[0-9]+$"))
+					request.setUid(Integer.parseInt(escapeHtml(nameField.getText())));
+				else
+				{
+					request.setToken(escapeHtml(nameField.getText()));
+					request.setOldReq();
+				}
 				
-				// request ping loop
-				Timer elaspedTimer = new Timer()
+				// Request check loop
+				Timer elapsedTimer = new Timer()
 				{
 					public void run()
 					{
+						// send request to server
 						pricingService.queueServer(request, new AsyncCallback<QueueRequest>()
-								{
+						{
+								@Override
+								public void onFailure(Throwable caught) {
+									errorLabel.setText("Request Queuing failed. Please try again.");
+									sendButton.setEnabled(true);
+									pricingService.removeRequest(request, null);
+									
+								}
 
-									@Override
-									public void onFailure(Throwable caught) {
-										errorLabel.setText("Request Queuing failed. Please try again.");
+								@Override
+								public void onSuccess(QueueRequest result) {
+									
+									if(result.getQueuePos() == -3)
+									{
+										loadingLabel.setText("Please wait for your previous request to finish and try again");
 										sendButton.setEnabled(true);
-										requestQueued = false;
-										pricingService.removeRequest(request, null);
-										cancel();
-										
 									}
-
-									@Override
-									public void onSuccess(QueueRequest result) {
-										
-										if(result.getQueuePos() == -3)
-										{
-											loadingLabel.setText("Please wait for your previous request to finish and try again");
-											sendButton.setEnabled(true);
-											requestQueued = false;
-											cancel();
-										}
-										
-										else if(result.getQueuePos() == -2)
-										{
-											loadingLabel.setText("Please wait 2 minutes before requesting again.");
-											sendButton.setEnabled(true);
-											requestQueued = false;
-											cancel();
-										}
-										
-										else
+									
+									else if(result.getQueuePos() == -2)
+									{
+										loadingLabel.setText("Please wait 10 minutes before requesting again.");
+										sendButton.setEnabled(true);
+									}
+									
+									else if(result.getQueuePos() == -4)
+									{
+										loadingLabel.setText("Invalid token");
+										sendButton.setEnabled(true);
+									}
+									
+									else
+									{
+										tokenLabel.setText("Your token is " + result.getToken());
+										if(!result.isProcessing() && !result.isDone())
 										{
 											loadingLabel.setText("Please wait. You are number " + result.getQueuePos() + " in the queue.");
-											request = result;
-											if(result.getGo())
-											{
-												cancel();
-												sendNameToServer();
-											}
 										}
-										
-									}
-							
-								});							
-						}				
-					
+										if(result.isProcessing())
+										{
+											loadingLabel.setText("Request is processing. Please wait.");
+										}
+										if(result.isDone())
+										{
+											// Clear other messages
+											errorLabel.setText("");
+											loadingLabel.setText("");
+											
+											// Output results
+											uidLabel.setText(result.getResult()[0]);
+											usernameLabel.setText(result.getResult()[1]);
+											postsLabel.setText(result.getResult()[2]);
+											activityLabel.setText(result.getResult()[3]);
+											potActivityLabel.setText(result.getResult()[4]);
+											postQualityLabel.setText(result.getResult()[5]);
+											trustLabel.setText(result.getResult()[6]);
+											priceLabel.setText(result.getResult()[7]);
+											int indexOfLastAct = 0;
+											int startAddrIndex = 0;
+											for(int i = 8; i < result.getResult().length; i++)
+											{
+												if(result.getResult()[i].equals("<b>Post Sections Breakdown</b>"))
+												{
+													indexOfLastAct = i;
+													break;
+												}
+												actTable.setHTML(i - 8, 0, result.getResult()[i]);
+											}
+											for(int i = indexOfLastAct; i < result.getResult().length; i++)
+											{
+												if(result.getResult()[i].contains("<b>Addresses posted in non-quoted text</b>"))
+												{
+													startAddrIndex = i;
+													break;
+												}
+												postsTable.setHTML(i - indexOfLastAct, 0, result.getResult()[i]);
+											}
+											for(int i = startAddrIndex; i < result.getResult().length; i++)
+											{
+												addrTable.setHTML(i - startAddrIndex, 0, result.getResult()[i]);
+											}
+
+											// Kill the timer after everything is done
+											cancel();
+										}
+										request = result;
+										sendButton.setEnabled(true);									}													
+								}
+							});
+						}
 					};
-					elaspedTimer.scheduleRepeating(2000);
-			}
+					elapsedTimer.scheduleRepeating(2000);
 
-			/**
-			 * Send the name from the nameField to the server and wait for a response.
-			 */
-			private void sendNameToServer() {
-				
-				// First, we validate the input.
-				errorLabel.setText("");
-				String textToServer = nameField.getText();
-				if (!FieldVerifier.isValidName(textToServer)) {
-					errorLabel.setText("User ID must only be numbers");
-					return;
-				}
-				
-				// Loading message
-				loadingLabel.setText("Loading... Please wait. Your request is being processed.");
+		}			
+	}
 
-				// Get data from server
-				pricingService.pricingServer(textToServer, request,
-						new AsyncCallback<String[]>() {
-							public void onFailure(Throwable caught) {
-								// Show the RPC error message to the user
-								errorLabel.setText("Remote Procedure Call - Failure. Please try again");
-								loadingLabel.setText("");
-								sendButton.setEnabled(true);
-								requestQueued = false;
-								pricingService.removeRequest(request, null);
-							}
-							
-							public void onSuccess(String[] result)
-							{
-								// Display data
-												
-								// Clear other messages
-								errorLabel.setText("");
-								loadingLabel.setText("");
-								
-								// Output results
-								uidLabel.setText(result[0]);
-								usernameLabel.setText(result[1]);
-								postsLabel.setText(result[2]);
-								activityLabel.setText(result[3]);
-								potActivityLabel.setText(result[4]);
-								postQualityLabel.setText(result[5]);
-								trustLabel.setText(result[6]);
-								priceLabel.setText(result[7]);
-								int indexOfLastAct = 0;
-								int startAddrIndex = 0;
-								for(int i = 8; i < result.length; i++)
-								{
-									if(result[i].equals("<b>Post Sections Breakdown</b>"))
-									{
-										indexOfLastAct = i;
-										break;
-									}
-									actTable.setHTML(i - 8, 0, result[i]);
-								}
-								for(int i = indexOfLastAct; i < result.length; i++)
-								{
-									if(result[i].contains("<b>Addresses posted in non-quoted text</b>"))
-									{
-										startAddrIndex = i;
-										break;
-									}
-									postsTable.setHTML(i - indexOfLastAct, 0, result[i]);
-								}
-								for(int i = startAddrIndex; i < result.length; i++)
-								{
-									addrTable.setHTML(i - startAddrIndex, 0, result[i]);
-								}
-								
-								sendButton.setEnabled(true);
-								requestQueued = false;
-							}
-						});
-			}
+	// Add a handler to send the name to the server
+	MyHandler handler = new MyHandler();
+	sendButton.addClickHandler(handler);
+	nameField.addKeyUpHandler(handler);
+}
+	
+	private String escapeHtml(String html) {
+		if (html == null) {
+			return null;
 		}
-
-		// Add a handler to send the name to the server
-		MyHandler handler = new MyHandler();
-		sendButton.addClickHandler(handler);
-		nameField.addKeyUpHandler(handler);
-		
-		// Display leaving message if request is active
-		Window.addWindowClosingHandler(new Window.ClosingHandler() {
-		      public void onWindowClosing(Window.ClosingEvent closingEvent) {
-		    	  if(requestQueued)
-		    	  {
-		    		  closingEvent.setMessage("Do you really want to leave the page? Your request is queued and leaving will remove it.");
-		    	  }
-		      }
-		    });
-		
-		// Remove request on close
-		Window.addCloseHandler(new CloseHandler<Window>() {
-
-            @Override
-            public void onClose(CloseEvent<Window> event) {
-
-                if(requestQueued)
-                {
-                	pricingService.removeRequest(request, new AsyncCallback<Boolean>() {
-
-						@Override
-						public void onSuccess(Boolean result) {
-							// TODO Auto-generated method stub
-							
-						}
-
-						@Override
-						public void onFailure(Throwable caught) {
-							// TODO Auto-generated method stub
-							
-						}
-                	});
-                }
-            }
-        });
+		return html.replaceAll("&", "&amp;").replaceAll("<", "&lt;")
+				.replaceAll(">", "&gt;");
 	}
 }

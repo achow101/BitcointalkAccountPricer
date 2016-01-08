@@ -3,16 +3,18 @@ package com.achow101.bctalkaccountpricer.shared;
 import java.io.Serializable;
 
 public class QueueRequest implements Serializable{
-	
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
+
+	private static final long serialVersionUID = -1012714783248122922L;
 	private boolean go = false;
 	private int pos = 0;
 	private boolean newRequest = true;
 	private String ip;
 	private long time;
+	private String token;
+	private String[] result;
+	private int uid = 0;
+	private boolean processing = false;
+	private boolean done = false;
 	
 	public QueueRequest(){}
 	
@@ -64,5 +66,55 @@ public class QueueRequest implements Serializable{
 	public boolean isNew()
 	{
 		return newRequest;
+	}
+	
+	public void setToken(String token)
+	{
+		this.token = token;
+	}
+	
+	public String getToken()
+	{
+		return token;
+	}
+	
+	public void setResult(String[] result)
+	{
+		this.result = result;
+	}
+	
+	public String[] getResult()
+	{
+		return result;
+	}
+	
+	public void setUid(int uid)
+	{
+		this.uid = uid;
+	}
+	
+	public int getUid()
+	{
+		return uid;
+	}
+	
+	public void setProcessing(boolean processing)
+	{
+		this.processing = processing;
+	}
+	
+	public boolean isProcessing()
+	{
+		return processing;
+	}
+	
+	public void setDone(boolean done)
+	{
+		this.done = done;
+	}
+	
+	public boolean isDone()
+	{
+		return done;
 	}
 }

@@ -36,11 +36,11 @@ public class AccountPricer {
 	final String ACCOUNT_NAME = "accountbot";
 	final String ACCOUNT_PASS = "NOT THE RIGHT PASSWORD";
 	
-	int userId = 3;
+	private int userId = 3;
 	
-	public AccountPricer(int uid)
+	public AccountPricer(int userId)
 	{
-		userId = uid;
+		this.userId = userId;
 	}
 
 	public String[] getAccountData() {
@@ -99,7 +99,7 @@ public class AccountPricer {
 		
 		// get number of pages
 		int pages = posts / 20;
-		if((posts + 1) % 20 != 0)
+		if(posts % 20 != 0)
 			pages++;
 		
 		// other vars
