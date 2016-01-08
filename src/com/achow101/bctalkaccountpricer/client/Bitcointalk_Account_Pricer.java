@@ -154,6 +154,7 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 				sendButton.setEnabled(false);
 				errorLabel.setText("");
 				loadingLabel.setText("");
+				tokenLabel.setText("");
 				actTable.clear(true);
 				postsTable.clear(true);
 				addrTable.clear(true);
@@ -191,18 +192,21 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 									{
 										loadingLabel.setText("Please wait for your previous request to finish and try again");
 										sendButton.setEnabled(true);
+										cancel();
 									}
 									
 									else if(result.getQueuePos() == -2)
 									{
 										loadingLabel.setText("Please wait 10 minutes before requesting again.");
 										sendButton.setEnabled(true);
+										cancel();
 									}
 									
 									else if(result.getQueuePos() == -4)
 									{
 										loadingLabel.setText("Invalid token");
 										sendButton.setEnabled(true);
+										cancel();
 									}
 									
 									else

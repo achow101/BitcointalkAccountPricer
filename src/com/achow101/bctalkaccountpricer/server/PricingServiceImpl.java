@@ -19,7 +19,10 @@ package com.achow101.bctalkaccountpricer.server;
 import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.concurrent.BlockingQueue;
 
 import com.achow101.bctalkaccountpricer.client.PricingService;
@@ -34,8 +37,8 @@ import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 public class PricingServiceImpl extends RemoteServiceServlet implements
 		PricingService, Runnable {
 	
-	public static List<QueueRequest> waitingRequests = new ArrayList<QueueRequest>();
-	public static List<QueueRequest> completedRequests = new ArrayList<QueueRequest>();
+	public static List<QueueRequest> waitingRequests = Collections.synchronizedList(new ArrayList<QueueRequest>());
+	public static List<QueueRequest> completedRequests = Collections.synchronizedList(new ArrayList<QueueRequest>());
 
 	private static BlockingQueue<QueueRequest> requestsToProcess = Config.requestsToProcess;
 	private static BlockingQueue<QueueRequest> processedRequests = Config.processedRequests;
@@ -76,32 +79,42 @@ public class PricingServiceImpl extends RemoteServiceServlet implements
 				}
 			}
 			
-			for(QueueRequest req : waitingRequests)
+			synchronized(waitingRequests)
 			{
-				// If still processing request
-				if(req.getToken().equals(request.getToken()))
+				Iterator<QueueRequest> itr = waitingRequests.iterator();
+				while(itr.hasNext())
 				{
-					return req;
+					QueueRequest req = itr.next();
+					if(req.getToken().equals(request.getToken()))
+					{
+						return req;
+					}
+					// Check if ip already requested
+					if(false && req.getIp().equals(request.getIp()))
+					{
+						request.setQueuePos(-3);
+						return request;
+					}
 				}
-				/*// Check if ip already requested
-				if(req.getIp().equals(request.getIp()))
-				{
-					request.setQueuePos(-3);
-					return request;
-				}*/
 			}
 			
-			for(QueueRequest req : completedRequests)
+			synchronized(completedRequests)
 			{
-				// Get the right one that is done
-				if(req.getToken().equals(request.getToken()))
+				Iterator<QueueRequest> itr = completedRequests.iterator();
+				while(itr.hasNext())
 				{
-					return req;
+					QueueRequest req = itr.next();
+					
+					// Get the right one that is done
+					if(req.getToken().equals(request.getToken()))
+					{
+						return req;
+					}
 				}
 			}
 
 			// add the token
-			request.setToken(new BigInteger(64, random).toString(32));
+			request.setToken(new BigInteger(40, random).toString(32));
 			request.setOldReq();
 			request.setGo(false);
 			waitingRequests.add(request);
@@ -114,57 +127,89 @@ public class PricingServiceImpl extends RemoteServiceServlet implements
 			}
 		}
 		
-		for(QueueRequest req : waitingRequests)
+		synchronized(completedRequests)
 		{
-			// Remove -1 position requests
-			if(req.getQueuePos() == -1)
+			Iterator<QueueRequest> itr = completedRequests.iterator();
+			while(itr.hasNext())
 			{
-				waitingRequests.remove(req);
-			}
-			
-			// Set first request to go
-			if(req.getQueuePos() == 0 && waitingRequests.indexOf(req) == 0)
-			{
-				req.setProcessing(true);
-			}
-			
-			// Set position of request to position in list
-			req.setQueuePos(waitingRequests.indexOf(req));
-			
-			// Set request to return to match actual request in list
-			if(req.getToken().equals(request.getToken()))
-			{
-				request = req;
+				QueueRequest req = itr.next();
+				
+				// Get the right one that is done
+				if(req.getToken().equals(request.getToken()))
+				{
+					return req;
+				}
 			}
 		}
 		
-		for(QueueRequest req : completedRequests)
+		synchronized(waitingRequests)
 		{
-			// Get the right one that is done
-			if(req.getToken().equals(request.getToken()))
+			Iterator<QueueRequest> itr = waitingRequests.iterator();
+			while(itr.hasNext())
 			{
-				return req;
+				QueueRequest req = itr.next();
+				
+				// Remove -1 position requests
+				if(req.getQueuePos() == -1)
+				{
+					waitingRequests.remove(req);
+				}
+				
+				// Set first request to go
+				if(req.getQueuePos() == 0 && waitingRequests.indexOf(req) == 0)
+				{
+					req.setProcessing(true);
+				}
+				
+				// Set position of request to position in list
+				req.setQueuePos(waitingRequests.indexOf(req));
+				
+				// Set request to return to match actual request in list
+				if(req.getToken().equals(request.getToken()))
+				{
+					request = req;
+				}
 			}
 		}
+		
 		return request;
 	}
 
 	@Override
 	public boolean removeRequest(QueueRequest request){
-		for(QueueRequest req : waitingRequests)
+		
+		boolean removed = false;
+		
+		synchronized(waitingRequests)
 		{
-			if(req.getToken().equals(request.getToken()))
+			Iterator<QueueRequest> itr = waitingRequests.iterator();
+			while(itr.hasNext())
 			{
-				waitingRequests.remove(req);
-				System.out.println("Removed request " + req.getToken() + " from queue");
-				request.setTime(System.currentTimeMillis() / 1000L);
-				completedRequests.add(request);
-				System.out.println("Adding request " + req.getToken() + " to completed request list");
-				return true;
+				QueueRequest req = itr.next();
+				
+				// Get the right request
+				if(req.getToken().equals(request.getToken()))
+				{
+					// Remove the request from the waiting list
+					itr.remove();
+					System.out.println("Removed request " + req.getToken() + " from queue");
+					removed = true;
+				}
 			}
-			
 		}
-		return false;
+		
+		if(removed)
+		{
+			request.setTime(System.currentTimeMillis() / 1000L);
+			
+			synchronized(completedRequests)
+			{
+				ListIterator<QueueRequest> itr = completedRequests.listIterator();
+				itr.add(request);
+				System.out.println("Adding request " + request.getToken() + " to completed request list");
+			}
+		}
+		return removed;
 	}
 	
 	public void run()
