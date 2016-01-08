@@ -50,7 +50,6 @@ public class AccountPricer {
 		
 		// Summary vars
 		String postsString = null;
-		String line;
 		String username = null;
 		String rank = "";
 		
@@ -468,7 +467,13 @@ public class AccountPricer {
 	private int checkForTrust()
 	{
 		try{
-			Connection.Response res = Jsoup.connect("https://bitcointalk.org/index.php?action=login2")
+			
+			Connection.Response res;
+			boolean notLoggedIn = true;
+			
+			do
+			{
+			res = Jsoup.connect("https://bitcointalk.org/index.php?action=login2")
                     .followRedirects(true)
                     .data("user", ACCOUNT_NAME)
                     .data("passwrd", ACCOUNT_PASS)
@@ -476,6 +481,10 @@ public class AccountPricer {
                     .method(Connection.Method.POST)
                     .execute();
             Document loggedInDocument = res.parse();
+            
+            notLoggedIn = loggedInDocument.html().contains("You will have to wait about 45 seconds before trying to log in again");
+            
+			} while(notLoggedIn);
             
             String sessId = res.cookie("PHPSESSID");
             
