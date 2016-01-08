@@ -16,7 +16,6 @@
  ******************************************************************************/
 package com.achow101.bctalkaccountpricer.client;
 
-import com.achow101.bctalkaccountpricer.shared.FieldVerifier;
 import com.achow101.bctalkaccountpricer.shared.QueueRequest;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
@@ -25,13 +24,13 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextBox;
-import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
 /**
@@ -170,7 +169,7 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 				}
 				
 				// Request check loop
-				Timer elapsedTimer = new Timer()
+				Timer requestTimer = new Timer()
 				{
 					public void run()
 					{
@@ -182,7 +181,7 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 									errorLabel.setText("Request Queuing failed. Please try again.");
 									sendButton.setEnabled(true);
 									pricingService.removeRequest(request, null);
-									
+									cancel();
 								}
 
 								@Override
@@ -269,7 +268,16 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 							});
 						}
 					};
-					elapsedTimer.scheduleRepeating(2000);
+					requestTimer.scheduleRepeating(2000);
+					
+					Timer setOldReqTimer = new Timer()
+					{
+						public void run()
+						{
+							request.setOldReq();
+						}
+					};
+					setOldReqTimer.schedule(2001);
 
 		}			
 	}

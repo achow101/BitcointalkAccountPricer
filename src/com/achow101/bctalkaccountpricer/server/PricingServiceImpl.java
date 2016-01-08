@@ -117,14 +117,40 @@ public class PricingServiceImpl extends RemoteServiceServlet implements
 			request.setToken(new BigInteger(40, random).toString(32));
 			request.setOldReq();
 			request.setGo(false);
-			waitingRequests.add(request);
+			
+			// Add request to queue
+			synchronized(waitingRequests)
+			{
+				ListIterator<QueueRequest> itr = waitingRequests.listIterator();
+				while(itr.hasNext())
+				{
+					QueueRequest req = itr.next();
+					if(!itr.hasNext())
+					{
+						request.setQueuePos(itr.nextIndex());
+						itr.add(request); // Add request to the second to last position
+						itr.previous(); // Move cursor to second to last position
+						itr.set(req); // Set second to last request to req
+						itr.next(); // Move cursor to last position
+						itr.set(request); // Set last request to request
+					}
+				}
+				if(itr.nextIndex() == 0)
+				{
+					itr.add(request);
+				}
+			}
+			
 			try {
 				requestsToProcess.put(request);
+				System.out.println("Queue has " + requestsToProcess.size() + " requests");
 				System.out.println("Added request " + request.getToken() + " to queue.");
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+			
+			return request;
 		}
 		
 		synchronized(completedRequests)
@@ -144,7 +170,7 @@ public class PricingServiceImpl extends RemoteServiceServlet implements
 		
 		synchronized(waitingRequests)
 		{
-			Iterator<QueueRequest> itr = waitingRequests.iterator();
+			ListIterator<QueueRequest> itr = waitingRequests.listIterator();
 			while(itr.hasNext())
 			{
 				QueueRequest req = itr.next();
@@ -152,17 +178,17 @@ public class PricingServiceImpl extends RemoteServiceServlet implements
 				// Remove -1 position requests
 				if(req.getQueuePos() == -1)
 				{
-					waitingRequests.remove(req);
+					itr.remove();
 				}
 				
 				// Set first request to go
-				if(req.getQueuePos() == 0 && waitingRequests.indexOf(req) == 0)
+				if(req.getQueuePos() == 0 && itr.nextIndex() == 1)
 				{
 					req.setProcessing(true);
 				}
 				
 				// Set position of request to position in list
-				req.setQueuePos(waitingRequests.indexOf(req));
+				req.setQueuePos(itr.nextIndex() - 1);
 				
 				// Set request to return to match actual request in list
 				if(req.getToken().equals(request.getToken()))

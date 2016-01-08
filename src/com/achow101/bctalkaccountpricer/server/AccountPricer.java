@@ -268,7 +268,11 @@ public class AccountPricer {
 		}
 		
 		// Add most recent 2 week period
-		activityDetail.add(new ActivityDetail(prev2week, -1, postsInWeek));
+		if(prev2week + 1210000 < System.currentTimeMillis() / 1000L)
+			cur2week = prev2week + 1210000;
+		else
+			cur2week = -1;
+		activityDetail.add(new ActivityDetail(prev2week, cur2week, postsInWeek));
 		
 		// Remove extraneous first 2 week period
 		activityDetail.remove(0);
