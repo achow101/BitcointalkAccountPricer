@@ -56,6 +56,9 @@ public class AccountPricer {
 		// Retrieve summary page
 		try {
 			
+			// Wait a second to prevent ip bans
+			Thread.sleep(1010);
+			
 			// Get the profile summary page
 			Document profileSummary = Jsoup.connect("https://bitcointalk.org/index.php?action=profile;u=" + userId + ";sa=summary").get();
 			

@@ -15,6 +15,7 @@ public class QueueRequest implements Serializable{
 	private int uid = 0;
 	private boolean processing = false;
 	private boolean done = false;
+	private long expirationTime = 60;
 	
 	public QueueRequest(){}
 	
@@ -116,5 +117,15 @@ public class QueueRequest implements Serializable{
 	public boolean isDone()
 	{
 		return done;
+	}
+	
+	public void setExpirationTime(long secs)
+	{
+		expirationTime = secs;
+	}
+	
+	public boolean isExpired()
+	{
+		return (System.currentTimeMillis() / 1000L) > (time + expirationTime);
 	}
 }

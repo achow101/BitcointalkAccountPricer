@@ -63,19 +63,31 @@ public class PricingServiceImpl extends RemoteServiceServlet implements
 				request.setToken("NO TOKEN");
 			}
 			
-			for(QueueRequest req : completedRequests)
+			synchronized(completedRequests)
 			{
-				// If request is done
-				if(req.getToken().equals(request.getToken()))
+				Iterator<QueueRequest> itr = completedRequests.iterator();
+				while(itr.hasNext())
 				{
-					return req;
-				}
-				// Check if Ip needs to wait
-				// TODO: Remove negative before publishing!
-				if(req.getIp().equals(request.getIp()) && request.getTime() - req.getTime() <= -120)
-				{
-					request.setQueuePos(-2);
-					return request;
+					QueueRequest req = itr.next();
+					
+					// Remove expired ones
+					if(req.isExpired())
+					{
+						itr.remove();
+					}
+					
+					// Get the right one that is done
+					if(req.getToken().equals(request.getToken()))
+					{
+						return req;
+					}
+					// Check if Ip needs to wait
+					// TODO: Remove negative before publishing!
+					if(req.getIp().equals(request.getIp()) && request.getTime() - req.getTime() <= -120)
+					{
+						request.setQueuePos(-2);
+						return request;
+					}
 				}
 			}
 			
@@ -94,21 +106,6 @@ public class PricingServiceImpl extends RemoteServiceServlet implements
 					{
 						request.setQueuePos(-3);
 						return request;
-					}
-				}
-			}
-			
-			synchronized(completedRequests)
-			{
-				Iterator<QueueRequest> itr = completedRequests.iterator();
-				while(itr.hasNext())
-				{
-					QueueRequest req = itr.next();
-					
-					// Get the right one that is done
-					if(req.getToken().equals(request.getToken()))
-					{
-						return req;
 					}
 				}
 			}
@@ -160,6 +157,12 @@ public class PricingServiceImpl extends RemoteServiceServlet implements
 			{
 				QueueRequest req = itr.next();
 				
+				// Remove expired ones
+				if(req.isExpired())
+				{
+					itr.remove();
+				}
+				
 				// Get the right one that is done
 				if(req.getToken().equals(request.getToken()))
 				{
@@ -193,11 +196,13 @@ public class PricingServiceImpl extends RemoteServiceServlet implements
 				// Set request to return to match actual request in list
 				if(req.getToken().equals(request.getToken()))
 				{
-					request = req;
+					return req;
 				}
 			}
 		}
 		
+		// If any request makes it this far, then it is bad.
+		request.setQueuePos(-4);
 		return request;
 	}
 
@@ -212,6 +217,8 @@ public class PricingServiceImpl extends RemoteServiceServlet implements
 			while(itr.hasNext())
 			{
 				QueueRequest req = itr.next();
+				
+				req.setQueuePos(req.getQueuePos() - 1);
 				
 				// Get the right request
 				if(req.getToken().equals(request.getToken()))
@@ -229,7 +236,7 @@ public class PricingServiceImpl extends RemoteServiceServlet implements
 			request.setTime(System.currentTimeMillis() / 1000L);
 			
 			synchronized(completedRequests)
-			{
+			{				
 				ListIterator<QueueRequest> itr = completedRequests.listIterator();
 				itr.add(request);
 				System.out.println("Adding request " + request.getToken() + " to completed request list");
