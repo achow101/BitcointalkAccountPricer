@@ -15,7 +15,7 @@ public class QueueRequest implements Serializable{
 	private int uid = 0;
 	private boolean processing = false;
 	private boolean done = false;
-	private long expirationTime = 60;
+	private long expirationTime = 86400;
 	
 	public QueueRequest(){}
 	
