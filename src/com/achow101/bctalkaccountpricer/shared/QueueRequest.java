@@ -112,6 +112,7 @@ public class QueueRequest implements Serializable{
 	public void setDone(boolean done)
 	{
 		this.done = done;
+		setTime(System.currentTimeMillis() / 1000L);
 	}
 	
 	public boolean isDone()
