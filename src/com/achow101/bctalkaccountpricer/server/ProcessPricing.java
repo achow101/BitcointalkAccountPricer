@@ -23,9 +23,10 @@ public class ProcessPricing implements Runnable {
 				req.setProcessing(true);
 				
 				// Price the request
-				AccountPricer pricer = new AccountPricer(req.getUid());
+				AccountPricer pricer = new AccountPricer(req);
 				req.setResult(pricer.getAccountData());
 				req.setDone(true);
+				req.setCompletedTime(System.currentTimeMillis() / 1000L);
 				System.out.println("Completed processing request " + req.getToken());
 				
 				//Pass the data back to PricingServiceImpl thread

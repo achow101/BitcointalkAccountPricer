@@ -52,7 +52,7 @@ public class PricingServiceImpl extends RemoteServiceServlet implements
 		{
 			// Set remaining fields
 			request.setIp(getThreadLocalRequest().getRemoteAddr());
-			request.setTime(System.currentTimeMillis() / 1000L);
+			request.setRequestedTime(System.currentTimeMillis() / 1000L);
 			if(request.getToken() == null && request.getUid() == 0)
 			{
 				request.setQueuePos(-4);
@@ -83,7 +83,7 @@ public class PricingServiceImpl extends RemoteServiceServlet implements
 					}
 					// Check if Ip needs to wait
 					// TODO: Remove negative before publishing!
-					if(req.getIp().equals(request.getIp()) && request.getTime() - req.getTime() <= -120)
+					if(req.getIp().equals(request.getIp()) && request.getRequestedTime() - req.getRequestedTime() <= -120)
 					{
 						request.setQueuePos(-2);
 						return request;
@@ -232,9 +232,7 @@ public class PricingServiceImpl extends RemoteServiceServlet implements
 		}
 		
 		if(removed)
-		{
-			request.setTime(System.currentTimeMillis() / 1000L);
-			
+		{			
 			synchronized(completedRequests)
 			{				
 				ListIterator<QueueRequest> itr = completedRequests.listIterator();

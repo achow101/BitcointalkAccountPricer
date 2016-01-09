@@ -1,5 +1,6 @@
 package com.achow101.bctalkaccountpricer.server;
 
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
@@ -9,12 +10,16 @@ public class ActivityDetail
 		private long startTimestamp;
 		private long endTimestamp;
 		private int numPosts;
+		private int totalPosts;
+		private boolean merch;
 		
-		public ActivityDetail(long startTimestamp, long endTimestamp, int numPosts)
+		public ActivityDetail(long startTimestamp, long endTimestamp, int numPosts, int totalPosts, boolean merch)
 		{
 			this.startTimestamp = startTimestamp;
 			this.endTimestamp = endTimestamp;
 			this.numPosts = numPosts;
+			this.totalPosts = totalPosts;
+			this.merch = merch;
 		}
 		
 		public String toString()
@@ -38,8 +43,13 @@ public class ActivityDetail
 				formattedEndDate = sdf.format(endDate);
 			}
 			
-			// Add to array
-			return formattedStartDate + " - " + formattedEndDate + ": " + numPosts + " Posts" ;
+			if(merch)
+			{
+				DecimalFormat df = new DecimalFormat("#0.00");
+				return formattedStartDate + " - " + formattedEndDate + ": " + df.format(((double)numPosts / totalPosts) * 100) + "% of activity";
+			}
+			else		
+				return formattedStartDate + " - " + formattedEndDate + ": " + numPosts + " Posts" ;
 		
 		}
 	}

@@ -16,6 +16,8 @@
  ******************************************************************************/
 package com.achow101.bctalkaccountpricer.client;
 
+import java.util.Date;
+
 import com.achow101.bctalkaccountpricer.shared.QueueRequest;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
@@ -24,12 +26,14 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
+import com.google.gwt.i18n.shared.DateTimeFormat;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.InlineHTML;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -78,9 +82,15 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 		final Label loadingLabel = new Label();
 		final Label tokenLabel = new Label();
 		final InlineHTML estimateShareLabel = new InlineHTML();
-
+		final InlineHTML reportTimeStamp = new InlineHTML();
+		final RadioButton radioNormal = new RadioButton("merch", "Normal");
+		final RadioButton radioMerchant = new RadioButton("merch", "Merchant");
+		
 		// We can add style names to widgets
 		sendButton.addStyleName("sendButton");
+		radioNormal.setValue(true);
+		radioMerchant.setValue(false);
+		
 		// Add the nameField and sendButton to the RootPanel
 		// Use RootPanel.get() to get the entire body element
 		RootPanel.get("nameFieldContainer").add(nameField);
@@ -97,6 +107,9 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 		RootPanel.get("loadingLabelContainer").add(loadingLabel);
 		RootPanel.get("tokenLabelContainer").add(tokenLabel);
 		RootPanel.get("tokenShareLabelContainer").add(estimateShareLabel);
+		RootPanel.get("radioNormalContainer").add(radioNormal);
+		RootPanel.get("radioMerchantContainer").add(radioMerchant);
+		RootPanel.get("reportTimeStamp").add(reportTimeStamp);
 		
 		// Create activity breakdown panel
 		final VerticalPanel actPanel = new VerticalPanel();
@@ -163,6 +176,7 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 				
 				// Create and add request
 				request = new QueueRequest();
+				request.setMerchant(radioMerchant.getValue());
 				if(nameField.getText().matches("^[0-9]+$"))
 					request.setUid(Integer.parseInt(escapeHtml(nameField.getText())));
 				else
@@ -268,6 +282,17 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 											{
 												addrTable.setHTML(i - startAddrIndex, 0, result.getResult()[i]);
 											}
+											
+											// Set the right radio
+											radioMerchant.setValue(result.isMerchant());
+											radioNormal.setValue(!result.isMerchant());
+											
+											// Report the time stamp
+											DateTimeFormat fmt = DateTimeFormat.getFormat("MMMM dd, yyyy, hh:mm:ss a");
+											Date completedDate = new Date(1000L*result.getCompletedTime());
+											Date expireDate = new Date(1000L*(result.getCompletedTime() + result.getExpirationTime()));
+											reportTimeStamp.setHTML("<i>Report generated at " + fmt.format(completedDate) 
+												+ " and expires at " + fmt.format(expireDate) + "</i>");
 
 											// Kill the timer after everything is done
 											cancel();
