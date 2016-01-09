@@ -442,8 +442,12 @@ public class AccountPricer {
 		// Combine output with posts Breakdown
 		output = combineArrays(output, postsBreakdown);
 		
-		// Combine output with posted addresses
-		output = combineArrays(output, postedAddresses);
+		// Only output if it is not merchant
+		if(!merch)
+		{
+			// Combine output with posted addresses
+			output = combineArrays(output, postedAddresses);
+		}
 		
 		return output;
 	}
