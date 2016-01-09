@@ -28,6 +28,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlexTable;
+import com.google.gwt.user.client.ui.InlineHTML;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextBox;
@@ -76,6 +77,7 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 		final Label priceLabel = new Label();
 		final Label loadingLabel = new Label();
 		final Label tokenLabel = new Label();
+		final InlineHTML estimateShareLabel = new InlineHTML();
 
 		// We can add style names to widgets
 		sendButton.addStyleName("sendButton");
@@ -94,6 +96,7 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 		RootPanel.get("priceLabelContainer").add(priceLabel);
 		RootPanel.get("loadingLabelContainer").add(loadingLabel);
 		RootPanel.get("tokenLabelContainer").add(tokenLabel);
+		RootPanel.get("tokenShareLabelContainer").add(estimateShareLabel);
 		
 		// Create activity breakdown panel
 		final VerticalPanel actPanel = new VerticalPanel();
@@ -168,6 +171,11 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 					request.setOldReq();
 				}
 				
+				final String urlPath = com.google.gwt.user.client.Window.Location.getPath();
+				final String host = com.google.gwt.user.client.Window.Location.getHost();
+				final String protocol = com.google.gwt.user.client.Window.Location.getProtocol();
+				final String url = protocol + "//" + host + urlPath + "?token=";
+				
 				// Request check loop
 				Timer requestTimer = new Timer()
 				{
@@ -211,6 +219,8 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 									else
 									{
 										tokenLabel.setText("Your token is " + result.getToken());
+										estimateShareLabel.setHTML("Share this estimate: <a href=\"" + url + result.getToken() +
+												"\">" + url + result.getToken() + "</a>");
 										if(!result.isProcessing() && !result.isDone())
 										{
 											loadingLabel.setText("Please wait. You are number " + result.getQueuePos() + " in the queue.");
@@ -286,6 +296,14 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 	MyHandler handler = new MyHandler();
 	sendButton.addClickHandler(handler);
 	nameField.addKeyUpHandler(handler);
+	
+	// Check the URL for URL parameters
+	String urlTokenParam = com.google.gwt.user.client.Window.Location.getParameter("token");
+	if(!urlTokenParam.isEmpty())
+	{
+		nameField.setText(urlTokenParam);
+		handler.addToQueue();
+	}
 }
 	
 	private String escapeHtml(String html) {
