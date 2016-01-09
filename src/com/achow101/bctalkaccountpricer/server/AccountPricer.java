@@ -16,6 +16,7 @@
  ******************************************************************************/
 package com.achow101.bctalkaccountpricer.server;
 
+import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -30,6 +31,8 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import com.achow101.bctalkaccountpricer.shared.QueueRequest;
+
 public class AccountPricer {
 	
 	// TODO: Change password before compiling
@@ -37,10 +40,12 @@ public class AccountPricer {
 	final String ACCOUNT_PASS = "NOT THE RIGHT PASSWORD";
 	
 	private int userId = 3;
+	private boolean merch = false;
 	
-	public AccountPricer(int userId)
+	public AccountPricer(QueueRequest req)
 	{
-		this.userId = userId;
+		this.userId = req.getUid();
+		this.merch = req.isMerchant();
 	}
 
 	public String[] getAccountData() {
@@ -166,7 +171,7 @@ public class AccountPricer {
 					}
 					if(postsSections.size() == 0 || !sectionExists)
 					{
-						postsSections.add(new Section(boardString));
+						postsSections.add(new Section(boardString, merch));
 						postsSections.get(postsSections.size() - 1).incrementPostCount();
 					}
 					else
@@ -247,6 +252,7 @@ public class AccountPricer {
 		postsBreakdown[0] = "<b>Post Sections Breakdown</b>";
 		for(int i = 1; i < postsBreakdown.length; i++)
 		{
+			postsSections.get(i - 1).setTotalPosts(postcount);
 			postsBreakdown[i] = postsSections.get(i - 1).toString();
 		}
 		
@@ -262,7 +268,7 @@ public class AccountPricer {
 			if(cur2week != prev2week)
 			{
 				potActivity += 14;
-				activityDetail.add(new ActivityDetail(prev2week, prev2week + 1210000L, postsInWeek));
+				activityDetail.add(new ActivityDetail(prev2week, prev2week + 1210000L, postsInWeek, postcount, merch));
 				postsInWeek = 0;
 			}
 			
@@ -275,7 +281,7 @@ public class AccountPricer {
 			cur2week = prev2week + 1210000;
 		else
 			cur2week = -1;
-		activityDetail.add(new ActivityDetail(prev2week, cur2week, postsInWeek));
+		activityDetail.add(new ActivityDetail(prev2week, cur2week, postsInWeek, postcount, merch));
 		
 		// Remove extraneous first 2 week period
 		activityDetail.remove(0);
@@ -388,13 +394,22 @@ public class AccountPricer {
 		// Format price
 		DecimalFormat dfmt = new DecimalFormat("##,###,##0.00000000");
 		
+		// Merchants see different stuff
+		if(merch)
+		{
+			postcount = (postcount / 20) * 20;
+			activity = (activity / 20) * 20;
+			potActivity = (potActivity / 20) * 20;
+			dfmt.applyPattern("##,###,##0.000");
+			dfmt.setRoundingMode(RoundingMode.HALF_UP);
+		}
 		
 		// Write to intial output
-		output[0] = "User Id: " + userId;
-		output[1] = "Name: " + username;
-		output[2] = "Posts: " + postcount;
-		output[3] = "Activity: " + activity + " (" + rank + ")";
-		output[4] = "Potential Activity: " + potActivity + " (Potential " + potRank + ")";
+		output[0] = (merch) ? "" : "User Id: " + userId;
+		output[1] = (merch) ? "" : "Name: " + username;
+		output[2] = "Posts: " + postcount + ((merch) ? "+" : "");
+		output[3] = "Activity: " + activity + ((merch) ? "+" : "") + " (" + rank + ")";
+		output[4] = "Potential Activity: " + potActivity + ((merch) ? "+" : "") + " (Potential " + potRank + ")";
 		output[5] = "Post Quality: " + postQuality;
 		output[6] = "Trust: " + trust;
 		output[7] = "Estimated Price: " + dfmt.format(price);
