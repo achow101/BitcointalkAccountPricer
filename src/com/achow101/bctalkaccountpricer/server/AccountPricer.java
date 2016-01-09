@@ -328,7 +328,7 @@ public class AccountPricer {
 		
 		// Add next potential rank requirments to end of activity breakdown
 		int potActToNext = 0;
-		String nextPotRank = "Newbie";
+		String nextPotRank = "None";
 		switch(potRank)
 		{
 			case "Newbie": 
@@ -351,7 +351,7 @@ public class AccountPricer {
 			case "Hero Member": potActToNext = 775 - potActivity;
 				nextPotRank = "Legendary";
 				break;
-			case "Legendary": potActToNext = 0;
+			case "Legendary *Note: Not guaranteed; The account can become Legendary anywhere between 775 and 1030": potActToNext = 0;
 				nextPotRank = "Already the highest Rank";
 				break;
 		}
