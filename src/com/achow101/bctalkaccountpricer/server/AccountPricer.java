@@ -58,47 +58,58 @@ public class AccountPricer {
 		String username = null;
 		String rank = "";
 		
-		// Retrieve summary page
-		try {
-			
-			// Wait a second to prevent ip bans
-			Thread.sleep(1010);
-			
-			// Get the profile summary page
-			Document profileSummary = Jsoup.connect("https://bitcointalk.org/index.php?action=profile;u=" + userId + ";sa=summary").get();
-			
-			// Select profile table element
-			Element profileTable = profileSummary.select("table.bordercolor[align=center]").get(0);
-			
-			// Get elements of the profile
-			Elements profileElements = profileTable.select("td.windowbg > table > tbody > tr > td");
-			
-			// Find the right elements
-			Element lastProfileElem = profileElements.get(1);
-			for(Element elem : profileElements)
-			{
-				// username
-				if(lastProfileElem.text().contains("Name:"))
+		while(true)
+		{
+			// Retrieve summary page
+			try {
+				
+				// Wait a second to prevent ip bans
+				Thread.sleep(1010);
+				
+				// Get the profile summary page
+				Document profileSummary = Jsoup.connect("https://bitcointalk.org/index.php?action=profile;u=" + userId + ";sa=summary").get();
+				
+				// Select profile table element
+				Element profileTable = profileSummary.select("table.bordercolor[align=center]").get(0);
+				
+				// Get elements of the profile
+				Elements profileElements = profileTable.select("td.windowbg > table > tbody > tr > td");
+				
+				// Find the right elements
+				Element lastProfileElem = profileElements.get(1);
+				for(Element elem : profileElements)
 				{
-					username = elem.text();
+					// username
+					if(lastProfileElem.text().contains("Name:"))
+					{
+						username = elem.text();
+					}
+					
+					// posts
+					if(lastProfileElem.text().contains("Posts:"))
+					{
+						postsString = elem.text();
+					}
+					
+					// position
+					if(lastProfileElem.text().contains("Position:"))
+					{
+						rank = elem.text();
+					}
+					lastProfileElem = elem;
 				}
 				
-				// posts
-				if(lastProfileElem.text().contains("Posts:"))
-				{
-					postsString = elem.text();
-				}
+				break;
 				
-				// position
-				if(lastProfileElem.text().contains("Position:"))
-				{
-					rank = elem.text();
+			} catch (Exception e) {
+				e.printStackTrace();
+				try {
+					Thread.sleep(20000);
+				} catch (InterruptedException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
 				}
-				lastProfileElem = elem;
 			}
-			
-		} catch (Exception e) {
-			e.printStackTrace();
 		}
 		
 		// strings to numbers
@@ -110,7 +121,7 @@ public class AccountPricer {
 			pages++;
 		
 		// other vars
-		long[] dates = new long[posts];
+		long[] dates = new long[posts + 1];
 		int postcount = 0;
 		int goodPosts = 0;
 		List<Section> postsSections = new ArrayList<Section>();
@@ -119,111 +130,122 @@ public class AccountPricer {
 		// get posts from each page of 20 posts
 		for(int i = 0; i < pages; i++)
 		{
-			// get page
-			try {
-				
-				// get post page
-				Document postPage = Jsoup.connect("https://bitcointalk.org/index.php?action=profile;u=" + userId + ";sa=showPosts;start=" + (i * 20)).get();
-				
-				// get the table of each post
-				Elements postTables = postPage.select("table[width=100%][cellpadding=4][align=center].bordercolor");
-				
-				// get the post sections of each post
-				for(Element postTable : postTables)
-				{					
-					// get post header and get the text
-					Element postHeader = postTable.select("tr.titlebg2").get(0);
-					Element postDate = postHeader.select("td.middletext").get(1);
-					String dateStr = postDate.text().substring(4);
+			while(true)
+			{
+				// get page
+				try {
 					
-					// Parse date string and get unix timestamp
-					SimpleDateFormat fmt = new SimpleDateFormat("MMMM dd, yyyy, hh:mm:ss a");
-					Date date;
-					if(dateStr.contains("Today"))
-					{
-						date = new Date();
-						String currentDateStr = fmt.format(date);
-						dateStr = dateStr.replace("Today at", currentDateStr.substring(0, currentDateStr.lastIndexOf(",") + 1));
-					}
-					date = fmt.parse(dateStr);
-					long unixtime = date.getTime() / 1000;
-					dates[postcount] = unixtime;
+					// get post page
+					Document postPage = Jsoup.connect("https://bitcointalk.org/index.php?action=profile;u=" + userId + ";sa=showPosts;start=" + (i * 20)).get();
 					
-					// Get the board
-					Element postBoard = postHeader.select("td.middletext").get(0);
-					String boardString = postBoard.text();
-					if(boardString.contains("Re:"))
-					{
-						boardString = boardString.substring(0, boardString.indexOf("Re:"));
-					}
-					int lastSlashIndex = boardString.lastIndexOf(" / ");
-					boardString = boardString.substring(boardString.lastIndexOf(" / ", lastSlashIndex - 2) + 3, lastSlashIndex);
-					boolean sectionExists = false;
-					int sectionIndex = -1;
-					for(int j = 0; j < postsSections.size(); j++)
-					{
-						if(boardString.equals(postsSections.get(j).getName()))
+					// get the table of each post
+					Elements postTables = postPage.select("table[width=100%][cellpadding=4][align=center].bordercolor");
+					
+					// get the post sections of each post
+					for(Element postTable : postTables)
+					{					
+						// get post header and get the text
+						Element postHeader = postTable.select("tr.titlebg2").get(0);
+						Element postDate = postHeader.select("td.middletext").get(1);
+						String dateStr = postDate.text().substring(4);
+						
+						// Parse date string and get unix timestamp
+						SimpleDateFormat fmt = new SimpleDateFormat("MMMM dd, yyyy, hh:mm:ss a");
+						Date date;
+						if(dateStr.contains("Today"))
 						{
-							sectionExists = true;
-							sectionIndex = j;
-							break;
+							date = new Date();
+							String currentDateStr = fmt.format(date);
+							dateStr = dateStr.replace("Today at", currentDateStr.substring(0, currentDateStr.lastIndexOf(",") + 1));
 						}
-					}
-					if(postsSections.size() == 0 || !sectionExists)
-					{
-						postsSections.add(new Section(boardString, merch));
-						postsSections.get(postsSections.size() - 1).incrementPostCount();
-					}
-					else
-					{
-						postsSections.get(sectionIndex).incrementPostCount();
-					}
-					
-					// get post body and get the html
-					Element postBody = postTable.select("tr > td.windowbg2 > div.post").get(0);
-					
-					// Remove the quote classes
-					postBody.select("div.quote, div.quoteheader").remove();
-					String postString = postBody.text();
-					
-					// Count the post
-					if(postString.length() >= 75)
-						goodPosts++;
-					postcount++;
-					
-					// Get the post URL
-					Element postURLElement = postHeader.select("td.middletext > a[href]").last();
-					String postURL = postURLElement.attr("href");
-					
-					// retrieve addresses in the text
-					Pattern pattern = Pattern.compile("[13][a-km-zA-HJ-NP-Z0-9]{26,33}");
-					Matcher matcher = pattern.matcher(postString);
-					while(matcher.find())
-					{
-						String address = matcher.group();
-						boolean hasAddr = false;
-						for(Address addr : allAddresses)
+						date = fmt.parse(dateStr);
+						long unixtime = date.getTime() / 1000;
+						dates[postcount] = unixtime;
+						
+						// Get the board
+						Element postBoard = postHeader.select("td.middletext").get(0);
+						String boardString = postBoard.text();
+						if(boardString.contains("Re:"))
 						{
-							if(addr.getAddr().equals(address))
+							boardString = boardString.substring(0, boardString.indexOf("Re:"));
+						}
+						int lastSlashIndex = boardString.lastIndexOf(" / ");
+						boardString = boardString.substring(boardString.lastIndexOf(" / ", lastSlashIndex - 2) + 3, lastSlashIndex);
+						boolean sectionExists = false;
+						int sectionIndex = -1;
+						for(int j = 0; j < postsSections.size(); j++)
+						{
+							if(boardString.equals(postsSections.get(j).getName()))
 							{
-								addr.setDateURL(dateStr, postURL);
-								hasAddr = true;
+								sectionExists = true;
+								sectionIndex = j;
 								break;
 							}
 						}
-						if(!hasAddr)
+						if(postsSections.size() == 0 || !sectionExists)
 						{
-							allAddresses.add(new Address(address, postURL, dateStr));
+							postsSections.add(new Section(boardString, merch));
+							postsSections.get(postsSections.size() - 1).incrementPostCount();
+						}
+						else
+						{
+							postsSections.get(sectionIndex).incrementPostCount();
+						}
+						
+						// get post body and get the html
+						Element postBody = postTable.select("tr > td.windowbg2 > div.post").get(0);
+						
+						// Remove the quote classes
+						postBody.select("div.quote, div.quoteheader").remove();
+						String postString = postBody.text();
+						
+						// Count the post
+						if(postString.length() >= 75)
+							goodPosts++;
+						postcount++;
+						
+						// Get the post URL
+						Element postURLElement = postHeader.select("td.middletext > a[href]").last();
+						String postURL = postURLElement.attr("href");
+						
+						// retrieve addresses in the text
+						Pattern pattern = Pattern.compile("[13][a-km-zA-HJ-NP-Z0-9]{26,33}");
+						Matcher matcher = pattern.matcher(postString);
+						while(matcher.find())
+						{
+							String address = matcher.group();
+							boolean hasAddr = false;
+							for(Address addr : allAddresses)
+							{
+								if(addr.getAddr().equals(address))
+								{
+									addr.setDateURL(dateStr, postURL);
+									hasAddr = true;
+									break;
+								}
+							}
+							if(!hasAddr)
+							{
+								allAddresses.add(new Address(address, postURL, dateStr));
+							}
 						}
 					}
+					
+					// wait so ip is not banned.
+					Thread.sleep(1010);
+					
+					break;
+					
+				} catch (Exception e)
+				{
+					e.printStackTrace();
+					try {
+						Thread.sleep(20000);
+					} catch (InterruptedException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
 				}
-				
-				// wait so ip is not banned.
-				Thread.sleep(1010);
-				
-			} catch (Exception e)
-			{
-				e.printStackTrace();
 			}
 			
 		}
@@ -488,57 +510,60 @@ public class AccountPricer {
 	
 	private int checkForTrust()
 	{
-		try{
-			
-			Connection.Response res;
-			boolean notLoggedIn = true;
-			
-			do
+		while(true)
+		{				
+			try{
+				
+				Connection.Response res;
+				
+				res = Jsoup.connect("https://bitcointalk.org/index.php?action=login2")
+	                    .followRedirects(true)
+	                    .data("user", ACCOUNT_NAME)
+	                    .data("passwrd", ACCOUNT_PASS)
+	                    .data("cookielength", "-1")
+	                    .method(Connection.Method.POST)
+	                    .execute();
+	            Document loggedInDocument = res.parse();
+	            
+	            String sessId = res.cookie("PHPSESSID");
+	            
+	            Document profileDoc = Jsoup.connect("https://bitcointalk.org/index.php?action=profile;u=" + userId).cookie("PHPSESSID", sessId).get();
+			    
+			    Element trustSpan = profileDoc.select("span.trustscore").get(0);
+			    String trustColor = trustSpan.attr("style");
+			    
+			    // Neg trust
+			    if(trustColor.contains("color:#DC143C"))
+			    {
+			    	return -1;
+			    }
+			    
+			    // light green trust
+			    if(trustColor.contains("color:#74C365"))
+			    {
+			    	return 1;
+			    }
+			    
+			    // Dark green trust
+			    if(trustColor.contains("color:#008000"))
+			    {
+			    	return 2;
+			    }
+			    break;
+			}
+			catch(Exception e)
 			{
-			res = Jsoup.connect("https://bitcointalk.org/index.php?action=login2")
-                    .followRedirects(true)
-                    .data("user", ACCOUNT_NAME)
-                    .data("passwrd", ACCOUNT_PASS)
-                    .data("cookielength", "-1")
-                    .method(Connection.Method.POST)
-                    .execute();
-            Document loggedInDocument = res.parse();
-            
-            notLoggedIn = loggedInDocument.html().contains("You will have to wait about 45 seconds before trying to log in again");
-            
-			} while(notLoggedIn);
-            
-            String sessId = res.cookie("PHPSESSID");
-            
-            Document profileDoc = Jsoup.connect("https://bitcointalk.org/index.php?action=profile;u=" + userId).cookie("PHPSESSID", sessId).get();
-		    
-		    Element trustSpan = profileDoc.select("span.trustscore").get(0);
-		    String trustColor = trustSpan.attr("style");
-		    
-		    // Neg trust
-		    if(trustColor.contains("color:#DC143C"))
-		    {
-		    	return -1;
-		    }
-		    
-		    // light green trust
-		    if(trustColor.contains("color:#74C365"))
-		    {
-		    	return 1;
-		    }
-		    
-		    // Dark green trust
-		    if(trustColor.contains("color:#008000"))
-		    {
-		    	return 2;
-		    }
+				e.printStackTrace();
+				try {
+					Thread.sleep(20000);
+				} catch (InterruptedException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+			}
 		}
-		catch(Exception e)
-		{
-			e.printStackTrace();
-		}
-	    
-		return 0;
+		    
+			return 0;
 	}
 	
 	private String getRank(int activity, boolean potential, boolean isLegendary)
