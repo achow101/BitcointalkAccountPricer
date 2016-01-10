@@ -170,9 +170,11 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 				errorLabel.setText("");
 				loadingLabel.setText("");
 				tokenLabel.setText("");
-				actTable.clear(true);
-				postsTable.clear(true);
-				addrTable.clear(true);
+				estimateShareLabel.setText("");
+				reportTimeStamp.setText("");
+				actTable.removeAllRows();
+				postsTable.removeAllRows();
+				addrTable.removeAllRows();
 				
 				// Create and add request
 				request = new QueueRequest();
@@ -278,9 +280,12 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 												}
 												postsTable.setHTML(i - indexOfLastAct, 0, result.getResult()[i]);
 											}
-											for(int i = startAddrIndex; i < result.getResult().length; i++)
+											if(!result.isMerchant())
 											{
-												addrTable.setHTML(i - startAddrIndex, 0, result.getResult()[i]);
+												for(int i = startAddrIndex; i < result.getResult().length; i++)
+												{
+													addrTable.setHTML(i - startAddrIndex, 0, result.getResult()[i]);
+												}
 											}
 											
 											// Set the right radio

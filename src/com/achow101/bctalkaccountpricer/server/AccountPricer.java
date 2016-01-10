@@ -38,6 +38,42 @@ public class AccountPricer {
 	// TODO: Change password before compiling
 	final String ACCOUNT_NAME = "accountbot";
 	final String ACCOUNT_PASS = "NOT THE RIGHT PASSWORD";
+	final String[] boardStrings = {"Bitcoin / Bitcoin Discussion /", "Bitcoin / Technical Support /", "Economy / Marketplace /", "Bitcoin / Development & Technical Discussion /", 
+         "Economy / Economics /", "Economy / Trading Discussion /", "Other / Off-topic /", "Local / Русский (Russian) /", "Local / Other languages/locations /", 
+         "Bitcoin / Project Development /", "Local / Français / ", "Bitcoin / Mining / ", "Local / Deutsch (German) /", "Other / Chinese students /", "Local / Разное / ", 
+         "Local / Юристы / ", "Local / Трейдеры /", "Local / Майнеры /", "Local / Новички /", "Local / Бизнес /", "Other / Meta /", "Other / Obsolete (buying) /", 
+         "Other / Obsolete (selling) /", "Local / Español (Spanish) /", "Local / Italiano (Italian) /", "Local / Português (Portuguese) /", "Local / 中文 (Chinese) /", 
+         "Local / Mercado y Economía /", "Local / Hardware y Minería /", "Local / Esquina Libre /", "Other / Politics & Society /", "Local / Biete /", "Local / Suche /", 
+         "Bitcoin / Alternative clients / ", "Other / Beginners & Help /", "Bitcoin / Mining support /", "Bitcoin / Pools /", "Bitcoin / Mining software (miners) /", 
+         "Other / CPU/GPU Bitcoin mining hardware /", "posts do not show properly", "Local / Mercato valute /", "Local / Discussions générales et utilisation du Bitcoin /", 
+         "Local / Mining et Hardware /", "Local / Place de marché /", "Local / Hors-sujet /", "Economy / Goods /", "Economy / Services /", "Economy / Currency exchange /", 
+         "Local / Wiki, documentation et traduction /", "Local / Хайпы /", "Economy / Gambling /", "Economy / Speculation /", "Other / Archival /", "Local / Mining (Deutsch) /", 
+         "Local / Trading und Spekulation /", "Local / Anfänger und Hilfe /", "Local / Off-Topic (Deutsch) /", "Economy / Lending /", "Local / Кодеры /", 
+         "Alternate cryptocurrencies / Altcoin Discussion /", "Local / Economia & Mercado /", "Local / Mineração em Geral /", "Economy / Games and rounds /", "Local / Форки /", 
+         "Economy / Auctions /", "Bitcoin / Legal /", "Economy / Computer hardware /", "Bitcoin / Hardware /", "Bitcoin / Press /", "Economy / Securities /", "Local / Nederlands (Dutch) /", 
+         "Local / Markt /", "Bitcoin / Mining speculation /", "Local / 한국어 (Korean)", "Economy / Scam Accusations /", "Economy / Service Announcements /", "Economy / Service Discussion /", 
+         "Bitcoin / Meetups /", "Bitcoin / Important Announcements / ", "Economy / Long-term offers /", "Local / India /", "Local / Идеи /", "Local / Политика /", "Local / Корзина /", 
+         "Economy / Digital goods /", "Local / Gokken/lotterijen /", "Local / עברית (Hebrew) /", "Bitcoin / Armory /", "Bitcoin / Electrum / ", "Bitcoin / MultiBit /", 
+         "Bitcoin / Bitcoin Wallet for Android /", "Local / Mercadillo /", "Local / Mexico /", "Local / Argentina /", "Local / España /", "Local / Centroamerica y Caribe /", 
+         "Local / Beni / ", "Local / Română (Romanian) /", "Local / Anunturi importante / ", "Local /  Offtopic / ", "Local / Market / ", "Local / Tutoriale /", 
+         "Local / Bine ai venit! /", "Local / Presa /", "Local / Mining (Italiano) /", "Local / Mining (Nederlands) /", "Local / 跳蚤市场 /", "Local / 山寨币 /", "Local / 媒体 /", 
+         "Local / Ελληνικά (Greek) /", "Local / Mining (India) /", "Local / Marketplace (India) /", "Local / Regional Languages (India) /", "Local / Press & News from India / ", 
+         "Local / Alt Coins (India) /", "Local / Buyer/ Seller Reputations (India) /", "Local / Off-Topic (India) /", "Local / Новости /", "Economy / Reputation /", 
+         "Local / Primeros pasos y ayuda / ", "Local / Primeiros Passos (Iniciantes) /", "Local / Alt-Currencies (Italiano) /", "Local / Türkçe (Turkish) /", "Local / Brasil /", 
+         "Local / Portugal /", "Local / Αγορά /", "Bitcoin / Group buys /", "Bitcoin / BitcoinJ /", "Local / Treffen /", "Local / Presse / ", "Local / Auktionen /", 
+         "Local / Polski /", "Local / Beurzen /", "Local / Raduni/Meeting (Italiano) /", "Local / Off-Topic (Italiano) /", "Local / 挖矿 /", "Local / Alt Coins (Nederlands) /", 
+         "Local / Altcoins (Deutsch) /", "Local / Guide (Italiano) /", "Local / Pazar Alanı /", "Local / Madencilik /", "Local / Alternatif Kripto-Paralar /", "Local / Konu Dışı /", 
+         "Alternate cryptocurrencies / Announcements (Altcoins) /", "Alternate cryptocurrencies / Mining (Altcoins) /", "Alternate cryptocurrencies / Marketplace (Altcoins) /", 
+         "Local / Accuse scam/truffe /", "Local / Tablica ogłoszeń / ", "Local / Alternatywne kryptowaluty /", "Local / Crittografia e decentralizzazione /", "Local / Minerit /", 
+         "Other / New forum software /", "Other / Bitcoin Wiki /", "Local / Progetti /", "Local / Mercato /", "Local / Servizi /", "Local / Esercizi commerciali /", 
+         "Local / Hardware/Mining (Italiano) /", "Local / Yeni Başlayanlar & Yardım /", "Local / Trading, analisi e speculazione /", "Local / Annunci /", "Local / Minería de altcoins /", 
+         "Local / Altcoins (Monede Alternative) / ", "Local / Altcoins (Ελληνικά) /", "Local / Bitcoin Haberleri /", "Local / Criptomoedas Alternativas /", "Local / 대체코인 Alt Coins (한국어) /", 
+         "Local / Actualité et News /", "Local / Vos sites et projets /", "Local / Работа /", "Local / Développement et technique / ", "Local / Économie et spéculation /", 
+         "Local / Le Bitcoin et la loi /", "Local / Ekonomi /", "Local / Servisler /", "Local / Bahasa Indonesia (Indonesian) /", "Local / Altcoins (Bahasa Indonesia) /", 
+         "Local / Jual Beli /", "Local / Mining (Bahasa Indonesia) /", "Local / Mining (Ελληνικά) /", "Local / 离题万里 /", "Alternate cryptocurrencies / Service Announcements (Altcoins) /", 
+         "Alternate cryptocurrencies / Service Discussion (Altcoins) /", "Alternate cryptocurrencies / Pools (Altcoins) /", "Local / Gambling (Italiano) /", "Local / Hrvatski (Croatian) /", 
+         "Local / Servicios / ", "Local / Trading y especulación /", "Local / Servicios / ", "Local / Discussioni avanzate e sviluppo /", "Local / Desenvolvimento & Discussões Técnicas /", 
+         "Economy / Investor-based games /", "Local / Débutants /", "Local / Échanges /", "Local / Produits et services /", "Local / Petites annonces /", "Economy / Micro Earnings /", "Economy / Collectibles /"};
 	
 	private int userId = 3;
 	private boolean merch = false;
@@ -164,13 +200,15 @@ public class AccountPricer {
 						
 						// Get the board
 						Element postBoard = postHeader.select("td.middletext").get(0);
-						String boardString = postBoard.text();
-						if(boardString.contains("Re:"))
+						String boardPath = postBoard.text();
+						String boardString = "No Board";
+						for(String board : boardStrings)
 						{
-							boardString = boardString.substring(0, boardString.indexOf("Re:"));
+							if(boardPath.contains(board))
+							{
+								boardString = board;
+							}
 						}
-						int lastSlashIndex = boardString.lastIndexOf(" / ");
-						boardString = boardString.substring(boardString.lastIndexOf(" / ", lastSlashIndex - 2) + 3, lastSlashIndex);
 						boolean sectionExists = false;
 						int sectionIndex = -1;
 						for(int j = 0; j < postsSections.size(); j++)
