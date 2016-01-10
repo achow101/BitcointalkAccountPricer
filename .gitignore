@@ -51,6 +51,7 @@ Temporary Items
 # gwt caches and compiled units #
 war/gwt_bree/
 gwt-unitCache/
+war/bitcointalk_account_pricer
 
 # boilerplate generated classes #
 .apt_generated/
