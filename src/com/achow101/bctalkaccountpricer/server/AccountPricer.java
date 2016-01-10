@@ -78,11 +78,15 @@ public class AccountPricer {
 	
 	private int userId = 3;
 	private boolean merch = false;
+	private int failCount = 0;
+	private int failRetries = 5;
+	private QueueRequest req;
 	
 	public AccountPricer(QueueRequest req)
 	{
 		this.userId = req.getUid();
 		this.merch = req.isMerchant();
+		this.req = req;
 	}
 
 	public String[] getAccountData() {
@@ -94,6 +98,7 @@ public class AccountPricer {
 		String postsString = null;
 		String username = null;
 		String rank = "";
+		
 		
 		while(true)
 		{
@@ -141,6 +146,13 @@ public class AccountPricer {
 			} catch (Exception e) {
 				e.printStackTrace();
 				try {
+					failCount++;
+					if(failCount >= failRetries)
+					{
+						System.out.println(req.getToken() + " has failed");
+						output[1] = "Request Failed";
+						return output;
+					}
 					Thread.sleep(20000);
 				} catch (InterruptedException e1) {
 					// TODO Auto-generated catch block
@@ -167,6 +179,7 @@ public class AccountPricer {
 		// get posts from each page of 20 posts
 		for(int i = 0; i < pages; i++)
 		{
+			failCount = 0;
 			while(true)
 			{
 				// get page
@@ -279,6 +292,13 @@ public class AccountPricer {
 				{
 					e.printStackTrace();
 					try {
+						failCount++;
+						if(failCount >= failRetries)
+						{
+							System.out.println(req.getToken() + " has failed");
+							output[1] = "Request Failed";
+							return output;
+						}
 						Thread.sleep(20000);
 					} catch (InterruptedException e1) {
 						// TODO Auto-generated catch block
@@ -447,6 +467,10 @@ public class AccountPricer {
 				break;
 			case 2: trust = "Positive, Dark Green Trust";
 				break;
+			case -2:
+				System.out.println(req.getToken() + " has failed");
+				output[1] = "Request Failed";
+				return output;
 		}
 		
 		// Get price
@@ -553,6 +577,7 @@ public class AccountPricer {
 	
 	private int checkForTrust()
 	{
+		failCount = 0;
 		while(true)
 		{				
 			try{
@@ -598,6 +623,11 @@ public class AccountPricer {
 			{
 				e.printStackTrace();
 				try {
+					failCount++;
+					if(failCount >= failRetries)
+					{
+						return -2;
+					}
 					Thread.sleep(20000);
 				} catch (InterruptedException e1) {
 					// TODO Auto-generated catch block
