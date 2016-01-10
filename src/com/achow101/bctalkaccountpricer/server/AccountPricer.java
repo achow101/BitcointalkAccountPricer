@@ -62,6 +62,7 @@ public class AccountPricer {
          "Local / Primeros pasos y ayuda / ", "Local / Primeiros Passos (Iniciantes) /", "Local / Alt-Currencies (Italiano) /", "Local / Türkçe (Turkish) /", "Local / Brasil /", 
          "Local / Portugal /", "Local / Αγορά /", "Bitcoin / Group buys /", "Bitcoin / BitcoinJ /", "Local / Treffen /", "Local / Presse / ", "Local / Auktionen /", 
          "Local / Polski /", "Local / Beurzen /", "Local / Raduni/Meeting (Italiano) /", "Local / Off-Topic (Italiano) /", "Local / 挖矿 /", "Local / Alt Coins (Nederlands) /", 
+         "Local / Off-topic (Nederlands) /", "Local / Altcoins (Français) /", "Local / Meetings (Nederlands) /", "Local / Altcoins (criptomonedas alternativas) /", "Local / Projektentwicklung /",
          "Local / Altcoins (Deutsch) /", "Local / Guide (Italiano) /", "Local / Pazar Alanı /", "Local / Madencilik /", "Local / Alternatif Kripto-Paralar /", "Local / Konu Dışı /", 
          "Alternate cryptocurrencies / Announcements (Altcoins) /", "Alternate cryptocurrencies / Mining (Altcoins) /", "Alternate cryptocurrencies / Marketplace (Altcoins) /", 
          "Local / Accuse scam/truffe /", "Local / Tablica ogłoszeń / ", "Local / Alternatywne kryptowaluty /", "Local / Crittografia e decentralizzazione /", "Local / Minerit /", 
