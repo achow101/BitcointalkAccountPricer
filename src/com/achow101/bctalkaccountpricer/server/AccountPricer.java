@@ -161,6 +161,26 @@ public class AccountPricer {
 			}
 		}
 		
+		// get trust rating
+		int trustScore = checkForTrust();
+		String trust = null;
+		
+		switch(trustScore)
+		{
+			case -1: trust = "Negative, Red Trust";
+				break;
+			case 0: trust = "Neutral";
+				break;
+			case 1: trust = "Positive, Light Green Trust";
+				break;
+			case 2: trust = "Positive, Dark Green Trust";
+				break;
+			case -2:
+				System.out.println(req.getToken() + " has failed");
+				output[1] = "Request Failed";
+				return output;
+		}
+		
 		// strings to numbers
 		int posts = Integer.parseInt(postsString);
 		
@@ -451,26 +471,6 @@ public class AccountPricer {
 		else if(postRatio < 0.50)
 		{
 			postQuality = "Very Poor";
-		}
-		
-		// get trust rating
-		int trustScore = checkForTrust();
-		String trust = null;
-		
-		switch(trustScore)
-		{
-			case -1: trust = "Negative, Red Trust";
-				break;
-			case 0: trust = "Neutral";
-				break;
-			case 1: trust = "Positive, Light Green Trust";
-				break;
-			case 2: trust = "Positive, Dark Green Trust";
-				break;
-			case -2:
-				System.out.println(req.getToken() + " has failed");
-				output[1] = "Request Failed";
-				return output;
 		}
 		
 		// Get price
