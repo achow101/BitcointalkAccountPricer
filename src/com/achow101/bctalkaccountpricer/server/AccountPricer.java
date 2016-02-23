@@ -185,7 +185,7 @@ public class AccountPricer {
 		int posts = Integer.parseInt(postsString);
 		
 		// get number of pages
-		int pages = posts / 20;
+		int pages = (posts - 1) / 20;
 		if(posts % 20 != 0)
 			pages++;
 		
@@ -263,6 +263,13 @@ public class AccountPricer {
 						{
 							postsSections.get(sectionIndex).incrementPostCount();
 						}
+
+						// TODO: Add the actual boards that are going to be not counted for activity
+						boolean postIsCounted = true;
+						if(boardString.contains("Games and rounds") && false) {
+							dates[postcount] = 0; // The 0 tricks later code into thinking it was part of the previous two week
+							postIsCounted = true; // TODO: Remove this if posts in those sections are counted in post count
+						}
 						
 						// get post body and get the html
 						Element postBody = postTable.select("tr > td.windowbg2 > div.post").get(0);
@@ -272,9 +279,11 @@ public class AccountPricer {
 						String postString = postBody.text();
 						
 						// Count the post
-						if(postString.length() >= 75)
-							goodPosts++;
-						postcount++;
+						if(postIsCounted) {
+							if (postString.length() >= 75)
+								goodPosts++;
+							postcount++;
+						}
 						
 						// Get the post URL
 						Element postURLElement = postHeader.select("td.middletext > a[href]").last();
@@ -363,18 +372,18 @@ public class AccountPricer {
 		long prev2week = 0;
 		int postsInWeek = 0;
 		List<ActivityDetail> activityDetail = new ArrayList<ActivityDetail>();
-		for(int i = dates.length - 1; i >= 0; i--)
-		{
-			cur2week = dates[i] - (dates[i] % 1210000);
-			if(cur2week != prev2week)
-			{
-				potActivity += 14;
-				activityDetail.add(new ActivityDetail(prev2week, prev2week + 1210000L, postsInWeek, postcount, merch));
-				postsInWeek = 0;
+		for(int i = dates.length - 1; i >= 0; i--) {
+			if (dates[i] != 0) {
+				cur2week = dates[i] - (dates[i] % 1210000);
+				if (cur2week != prev2week) {
+					potActivity += 14;
+					activityDetail.add(new ActivityDetail(prev2week, prev2week + 1210000L, postsInWeek, postcount, merch));
+					postsInWeek = 0;
+				}
+
+				prev2week = cur2week;
+				postsInWeek++;
 			}
-			
-			prev2week = cur2week;
-			postsInWeek++;
 		}
 		
 		// Add most recent 2 week period
