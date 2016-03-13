@@ -16,6 +16,7 @@
  ******************************************************************************/
 package com.achow101.bctalkaccountpricer.server;
 
+import java.io.IOException;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
@@ -127,12 +128,6 @@ public class AccountPricer {
 						username = elem.text();
 					}
 					
-					// posts
-					if(lastProfileElem.text().contains("Posts:"))
-					{
-						postsString = elem.text();
-					}
-					
 					// position
 					if(lastProfileElem.text().contains("Position:"))
 					{
@@ -180,17 +175,40 @@ public class AccountPricer {
 				output[1] = "Request Failed";
 				return output;
 		}
-		
-		// strings to numbers
-		int posts = Integer.parseInt(postsString);
-		
-		// get number of pages
-		int pages = (posts - 1) / 20;
-		if(posts % 20 != 0)
-			pages++;
+
+		// Get the number of pages
+		int pages = 0;
+		try {
+			// Get the page
+			Document onePostPage = Jsoup.connect("https://bitcointalk.org/index.php?action=profile;u=" + userId + ";sa=showPosts;").get();
+
+			// Get the navpages elements
+			Element headerNavBar = onePostPage.select("table[width=85%][cellspacing=1][cellpadding=4][align=center].bordercolor").first();
+			Elements headerNavPages = headerNavBar.select("tr.catbg3 > td > a.navPages");
+
+			// Get the last one and set the pages
+			Element lastPage = headerNavPages.last();
+			pages = Integer.parseInt(lastPage.text());
+
+		} catch (IOException e) {
+			e.printStackTrace();
+			try {
+				failCount++;
+				if(failCount >= failRetries)
+				{
+					System.out.println(req.getToken() + " has failed");
+					output[1] = "Request Failed";
+					return output;
+				}
+				Thread.sleep(20000);
+			} catch (InterruptedException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+		}
 		
 		// other vars
-		long[] dates = new long[posts + 1];
+		List<Long> dates = new ArrayList<Long>();
 		int postcount = 0;
 		int goodPosts = 0;
 		List<Section> postsSections = new ArrayList<Section>();
@@ -230,7 +248,7 @@ public class AccountPricer {
 						}
 						date = fmt.parse(dateStr);
 						long unixtime = date.getTime() / 1000;
-						dates[postcount] = unixtime;
+						dates.add(unixtime);
 						
 						// Get the board
 						Element postBoard = postHeader.select("td.middletext").get(0);
@@ -267,7 +285,7 @@ public class AccountPricer {
 						// TODO: Add the actual boards that are going to be not counted for activity
 						boolean postIsCounted = true;
 						if(boardString.contains("Games and rounds") && false) {
-							dates[postcount] = 0; // The 0 tricks later code into thinking it was part of the previous two week
+							dates.remove(postcount); // Remove the post from the dates list
 							postIsCounted = true; // TODO: Remove this if posts in those sections are counted in post count
 						}
 						
@@ -372,9 +390,9 @@ public class AccountPricer {
 		long prev2week = 0;
 		int postsInWeek = 0;
 		List<ActivityDetail> activityDetail = new ArrayList<ActivityDetail>();
-		for(int i = dates.length - 1; i >= 0; i--) {
-			if (dates[i] != 0) {
-				cur2week = dates[i] - (dates[i] % 1210000);
+		for(int i = dates.size() - 1; i >= 0; i--) {
+			if (dates.get(i) != 0) {
+				cur2week = dates.get(i) - (dates.get(i) % 1210000);
 				if (cur2week != prev2week) {
 					potActivity += 14;
 					activityDetail.add(new ActivityDetail(prev2week, prev2week + 1210000L, postsInWeek, postcount, merch));
@@ -397,7 +415,7 @@ public class AccountPricer {
 		activityDetail.remove(0);
 		
 		// Calculate activity
-		int activity = Math.min(activityDetail.size() * 14, posts);
+		int activity = Math.min(activityDetail.size() * 14, postcount);
 		
 		// Put detailed activity info into a string array
 		String[] activityBreakdown = new String[activityDetail.size() + 4];
@@ -449,7 +467,7 @@ public class AccountPricer {
 		activityBreakdown[activityBreakdown.length - 1] = "<b>Potential Activity to next Potential Rank: </b>" + potActToNext;
 		
 		// Get post quality
-		double postRatio = (double)goodPosts / posts;
+		double postRatio = (double)goodPosts / postcount;
 		String postQuality = null;
 		
 		// Excellent
