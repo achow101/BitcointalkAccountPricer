@@ -16,7 +16,6 @@
  ******************************************************************************/
 package com.achow101.bctalkaccountpricer.server;
 
-import java.io.IOException;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
@@ -186,11 +185,17 @@ public class AccountPricer {
 			Element headerNavBar = onePostPage.select("table[width=85%][cellspacing=1][cellpadding=4][align=center].bordercolor").first();
 			Elements headerNavPages = headerNavBar.select("tr.catbg3 > td > a.navPages");
 
+			// Get the page if there is only one page of posts
+			if(headerNavPages.size() == 0)
+			{
+				headerNavPages = headerNavBar.select("tr.catbg3 > td > b");
+			}
+
 			// Get the last one and set the pages
 			Element lastPage = headerNavPages.last();
 			pages = Integer.parseInt(lastPage.text());
 
-		} catch (IOException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 			try {
 				failCount++;
