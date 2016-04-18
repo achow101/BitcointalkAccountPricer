@@ -41,7 +41,11 @@ public class ProcessPricing implements Runnable {
 		while(true)
 		{
             if(!processNext) {
-                // TODO: multithreading wait and notify stuff
+                try {
+                    wait();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
             processNext = false;
 

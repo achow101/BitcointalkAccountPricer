@@ -118,7 +118,10 @@ public class PricingServiceImpl extends RemoteServiceServlet implements PricingS
                 em.getTransaction().begin();
                 req.setProcessing(true);
                 em.getTransaction().commit();
-                // TODO: notify processing thread
+                synchronized (Config.processPricing)
+                {
+                    notify();
+                }
             }
 
             // Find the highest queue position to set queue position
@@ -163,7 +166,10 @@ public class PricingServiceImpl extends RemoteServiceServlet implements PricingS
             // Set processing
             if(request.getQueuePos() == 0){
                 request.setProcessing(true);
-                // TODO: notify processing thread
+                synchronized (Config.processPricing)
+                {
+                    notify();
+                }
             }
 			
 			return request;

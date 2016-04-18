@@ -27,6 +27,8 @@ import com.achow101.bctalkaccountpricer.shared.QueueRequest;
 
 public class Config implements ServletContextListener {
 
+	public static ProcessPricing processPricing = new ProcessPricing();
+
 	@Override
 	public void contextDestroyed(ServletContextEvent arg0) {
 		// TODO Auto-generated method stub
@@ -35,7 +37,8 @@ public class Config implements ServletContextListener {
 
 	@Override
 	public void contextInitialized(ServletContextEvent arg0) {
-		(new Thread(new ProcessPricing())).start();
+		Thread t = new Thread(processPricing);
+        t.start();
 	}
 
 }
