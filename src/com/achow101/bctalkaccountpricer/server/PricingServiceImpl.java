@@ -29,6 +29,7 @@ import com.achow101.bctalkaccountpricer.client.PricingService;
 import com.achow101.bctalkaccountpricer.shared.QueueRequest;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 import com.objectdb.o.QUE;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -36,6 +37,7 @@ import javax.persistence.Persistence;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.ParameterExpression;
 import javax.persistence.criteria.Root;
 
 
@@ -69,7 +71,15 @@ public class PricingServiceImpl extends RemoteServiceServlet implements PricingS
 
         // Check if another request is processing
         boolean anotherIsProcessing = false;
-        // TODO: Create db query to find request being processed
+        CriteriaQuery<QueueRequest> qProcessing = cb.createQuery(QueueRequest.class);
+        Root<QueueRequest> rProcReqs = qProcessing.from(QueueRequest.class);
+        qProcessing.select(rProcReqs);
+        ParameterExpression<Boolean> rProc = cb.parameter(Boolean.class);
+        qProcessing.where(cb.equal(rProcReqs.get("processing"), rProc));
+        TypedQuery<QueueRequest> procQuery = em.createQuery(qProcessing);
+        List<QueueRequest> procReqList = procQuery.setParameter(rProc, true).getResultList();
+        if(procReqList.size() == 1)
+            anotherIsProcessing = true;
 
         // Go through list and figure out what to do with requests
         int hiQueuePos = 0;
@@ -84,18 +94,22 @@ public class PricingServiceImpl extends RemoteServiceServlet implements PricingS
                 em.getTransaction().commit();
             }
 
-            if(!request.isNew()) {
             // Check if Ip needs to wait
             // TODO: Remove negative before publishing!
-                if (req.getIp().equals(request.getIp()) && request.getRequestedTime() - req.getRequestedTime() <= -120) {
-                    request.setQueuePos(-2);
-                    return request;
-                }
+            if (!request.isNew() && req.getIp().equals(request.getIp()) && request.getRequestedTime() - req.getRequestedTime() <= -120 && !request.isPoll()) {
+                request.setQueuePos(-2);
+                // Close database connection
+                em.close();
+                emf.close();
+                return request;
             }
 
             // Check if ip already requested
-            if (!false && req.getIp().equals(request.getIp())) {
+            if (!false && req.getIp().equals(request.getIp()) && request.isNew() && !request.isPoll()) {
                 request.setQueuePos(-3);
+                // Close database connection
+                em.close();
+                emf.close();
                 return request;
             }
 
@@ -110,6 +124,13 @@ public class PricingServiceImpl extends RemoteServiceServlet implements PricingS
             // Find the highest queue position to set queue position
             if(req.getQueuePos() > hiQueuePos)
                 hiQueuePos = req.getQueuePos();
+
+            // Return matching req
+            if(req.getToken().equals(request.getToken()))
+                // Close database connection
+                em.close();
+                emf.close();
+                return req;
         }
 
 		if(request.isNew())
@@ -123,12 +144,6 @@ public class PricingServiceImpl extends RemoteServiceServlet implements PricingS
 				request.setQueuePos(-4);
 				return request;
 			}
-
-            // Set processing
-            if(request.getQueuePos() == 0){
-                request.setProcessing(true);
-                // TODO: notify processing thread
-            }
 
 			// add the token
 			request.setToken(new BigInteger(40, random).toString(32));
@@ -144,6 +159,12 @@ public class PricingServiceImpl extends RemoteServiceServlet implements PricingS
             // Close database connection
             em.close();
             emf.close();
+
+            // Set processing
+            if(request.getQueuePos() == 0){
+                request.setProcessing(true);
+                // TODO: notify processing thread
+            }
 			
 			return request;
 		}

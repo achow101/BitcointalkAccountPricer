@@ -39,6 +39,7 @@ public class QueueRequest implements Serializable{
 	private long expirationTime = 604800; // 1 week
 	private boolean merch;
 	private long completedTime;
+	private boolean poll = false;
 	
 	public QueueRequest(){}
 	
@@ -176,5 +177,15 @@ public class QueueRequest implements Serializable{
 	public long getCompletedTime()
 	{
 		return completedTime;
+	}
+
+	public boolean isPoll()
+	{
+		return poll;
+	}
+
+	public void setPoll(boolean poll)
+	{
+		this.poll = poll;
 	}
 }

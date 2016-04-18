@@ -303,6 +303,7 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 											cancel();
 										}
 										request = result;
+										request.setPoll(true);
 										sendButton.setEnabled(true);									}													
 								}
 							});

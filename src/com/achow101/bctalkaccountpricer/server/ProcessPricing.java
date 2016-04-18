@@ -37,9 +37,13 @@ public class ProcessPricing implements Runnable {
 		System.out.println("Starting ProcessPricing thread for processing the requests");
 		
 		// Infinte loop so that it runs indefinitely
+        boolean processNext = false;
 		while(true)
 		{
-            // TODO: multithreading wait and notify stuff
+            if(!processNext) {
+                // TODO: multithreading wait and notify stuff
+            }
+            processNext = false;
 
             // Open a database connection
             // (create a new database if it doesn't exist yet):
@@ -61,10 +65,6 @@ public class ProcessPricing implements Runnable {
                     System.out.println("Processing request " + req.getToken());
                     reqToProcess = req;
                 }
-
-                // Decrement queue pos by one. Can do because this is only called once when a request is being processed
-                if(req.getQueuePos() > 0)
-                    req.setQueuePos(req.getQueuePos() - 1);
             }
 
             // Price the request
@@ -79,6 +79,24 @@ public class ProcessPricing implements Runnable {
             reqToProcess.setCompletedTime(System.currentTimeMillis() / 1000L);
             reqToProcess.setQueuePos(-5);
             em.getTransaction().commit();
+
+            // Decrement queue pos of all other requests
+            for(QueueRequest req : reqList)
+            {
+                if(req.getQueuePos() > 0) {
+                    em.getTransaction().begin();
+                    req.setQueuePos(req.getQueuePos() - 1);
+
+                    // Set the next to process
+                    if (req.getQueuePos() == 0)
+                    {
+                        req.setProcessing(true);
+                        processNext = true;
+                    }
+
+                    em.getTransaction().commit();
+                }
+            }
 
             // Close database connection
             em.close();
