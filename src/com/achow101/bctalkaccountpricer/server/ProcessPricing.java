@@ -17,14 +17,20 @@
 
 package com.achow101.bctalkaccountpricer.server;
 
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 
 import com.achow101.bctalkaccountpricer.shared.QueueRequest;
 
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.Persistence;
+import javax.persistence.TypedQuery;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Root;
+
 public class ProcessPricing implements Runnable {
-	
-	private static BlockingQueue<QueueRequest> requestsToProcess = Config.requestsToProcess;
-	private static BlockingQueue<QueueRequest> processedRequests = Config.processedRequests;
 	
 	public void run()
 	{
@@ -33,26 +39,50 @@ public class ProcessPricing implements Runnable {
 		// Infinte loop so that it runs indefinitely
 		while(true)
 		{
-			try {
-				// Get request from PricingServiceImpl thread
-				QueueRequest req = requestsToProcess.take();
-				System.out.println("Processing request " + req.getToken());
-				req.setProcessing(true);
-				
-				// Price the request
-				AccountPricer pricer = new AccountPricer(req);
-				req.setResult(pricer.getAccountData());
-				req.setDone(true);
-				req.setCompletedTime(System.currentTimeMillis() / 1000L);
-				System.out.println("Completed processing request " + req.getToken());
-				
-				//Pass the data back to PricingServiceImpl thread
-				processedRequests.put(req);
-			
-			} catch (InterruptedException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
+            // TODO: multithreading wait and notify stuff
+
+            // Open a database connection
+            // (create a new database if it doesn't exist yet):
+            EntityManagerFactory emf = Persistence.createEntityManagerFactory("$objectdb/db/requests.odb");
+            EntityManager em = emf.createEntityManager();
+            CriteriaBuilder cb = em.getCriteriaBuilder();
+            CriteriaQuery<QueueRequest> q = cb.createQuery(QueueRequest.class);
+            Root<QueueRequest> reqs = q.from(QueueRequest.class);
+            q.select(reqs);
+            TypedQuery<QueueRequest> query = em.createQuery(q);
+            List<QueueRequest> reqList = query.getResultList();
+
+            // Find the request to process
+            QueueRequest reqToProcess = null;
+            for(QueueRequest req : reqList)
+            {
+                if(req.isProcessing())
+                {
+                    System.out.println("Processing request " + req.getToken());
+                    reqToProcess = req;
+                }
+
+                // Decrement queue pos by one. Can do because this is only called once when a request is being processed
+                if(req.getQueuePos() > 0)
+                    req.setQueuePos(req.getQueuePos() - 1);
+            }
+
+            // Price the request
+            AccountPricer pricer = new AccountPricer(reqToProcess);
+            System.out.println("Completed processing request " + reqToProcess.getToken());
+
+            // Change status in db
+            em.getTransaction().begin();
+            reqToProcess.setProcessing(false);
+            reqToProcess.setResult(pricer.getAccountData());
+            reqToProcess.setDone(true);
+            reqToProcess.setCompletedTime(System.currentTimeMillis() / 1000L);
+            reqToProcess.setQueuePos(-5);
+            em.getTransaction().commit();
+
+            // Close database connection
+            em.close();
+            emf.close();
 		}
 	}
 }

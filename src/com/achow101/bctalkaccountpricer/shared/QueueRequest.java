@@ -18,17 +18,20 @@
 package com.achow101.bctalkaccountpricer.shared;
 
 import javax.persistence.Entity;
+import javax.persistence.Id;
 import java.io.Serializable;
 
+@Entity
 public class QueueRequest implements Serializable{
 
 	private static final long serialVersionUID = -1012714783248122922L;
 	private boolean go = false;
-	private int pos = 0;
+	private int pos = -6;
 	private boolean newRequest = true;
 	private String ip;
 	private long requestedTime;
-	private String token;
+	@Id
+    private String token = "NO TOKEN";
 	private String[] result;
 	private int uid = 0;
 	private boolean processing = false;

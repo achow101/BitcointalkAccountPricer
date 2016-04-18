@@ -28,178 +28,129 @@ import java.util.concurrent.BlockingQueue;
 import com.achow101.bctalkaccountpricer.client.PricingService;
 import com.achow101.bctalkaccountpricer.shared.QueueRequest;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
+import com.objectdb.o.QUE;
+
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.Persistence;
+import javax.persistence.TypedQuery;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Root;
 
 
 /**
  * The server-side implementation of the RPC service.
  */
 @SuppressWarnings("serial")
-public class PricingServiceImpl extends RemoteServiceServlet implements
-		PricingService, Runnable {
-	
-	public static List<QueueRequest> waitingRequests = Collections.synchronizedList(new ArrayList<QueueRequest>());
-	public static List<QueueRequest> completedRequests = Collections.synchronizedList(new ArrayList<QueueRequest>());
-
-	private static BlockingQueue<QueueRequest> requestsToProcess = Config.requestsToProcess;
-	private static BlockingQueue<QueueRequest> processedRequests = Config.processedRequests;
+public class PricingServiceImpl extends RemoteServiceServlet implements PricingService {
 
 	private static SecureRandom random = new SecureRandom();
 
 	@Override
 	public QueueRequest queueServer(QueueRequest request)
 	{
+		// Open a database connection
+		// (create a new database if it doesn't exist yet):
+		EntityManagerFactory emf = Persistence.createEntityManagerFactory("$objectdb/db/requests.odb");
+		EntityManager em = emf.createEntityManager();
+
+        QueueRequest foundReq = em.find(QueueRequest.class, request.getToken());
+        if(foundReq != null)
+            return foundReq;
+
+        // Get list of results
+        CriteriaBuilder cb = em.getCriteriaBuilder();
+        CriteriaQuery<QueueRequest> q = cb.createQuery(QueueRequest.class);
+        Root<QueueRequest> reqs = q.from(QueueRequest.class);
+        q.select(reqs);
+        TypedQuery<QueueRequest> query = em.createQuery(q);
+        List<QueueRequest> reqList = query.getResultList();
+
+        // Check if another request is processing
+        boolean anotherIsProcessing = false;
+        // TODO: Create db query to find request being processed
+
+        // Go through list and figure out what to do with requests
+        int hiQueuePos = 0;
+        for(QueueRequest req : reqList)
+        {
+            // Remove expired ones
+            if(req.isExpired())
+            {
+                // Remove request from db
+                em.getTransaction().begin();
+                em.remove(req);
+                em.getTransaction().commit();
+            }
+
+            if(!request.isNew()) {
+            // Check if Ip needs to wait
+            // TODO: Remove negative before publishing!
+                if (req.getIp().equals(request.getIp()) && request.getRequestedTime() - req.getRequestedTime() <= -120) {
+                    request.setQueuePos(-2);
+                    return request;
+                }
+            }
+
+            // Check if ip already requested
+            if (!false && req.getIp().equals(request.getIp())) {
+                request.setQueuePos(-3);
+                return request;
+            }
+
+			// Set first request go
+			if(req.getQueuePos() == 0 && !req.isProcessing() && !anotherIsProcessing) {
+                em.getTransaction().begin();
+                req.setProcessing(true);
+                em.getTransaction().commit();
+                // TODO: notify processing thread
+            }
+
+            // Find the highest queue position to set queue position
+            if(req.getQueuePos() > hiQueuePos)
+                hiQueuePos = req.getQueuePos();
+        }
+
 		if(request.isNew())
 		{
 			// Set remaining fields
 			request.setIp(getThreadLocalRequest().getRemoteAddr());
 			request.setRequestedTime(System.currentTimeMillis() / 1000L);
-			if(request.getToken() == null && request.getUid() == 0)
+            request.setQueuePos(hiQueuePos);
+			if(request.getToken().equals("NO TOKEN") && request.getUid() == 0)
 			{
 				request.setQueuePos(-4);
 				return request;
 			}
-			else if(request.getToken() == null)
-			{
-				request.setToken("NO TOKEN");
-			}
-			
-			synchronized(completedRequests)
-			{
-				Iterator<QueueRequest> itr = completedRequests.iterator();
-				while(itr.hasNext())
-				{
-					QueueRequest req = itr.next();
-					
-					// Remove expired ones
-					if(req.isExpired())
-					{
-						itr.remove();
-					}
-					
-					// Get the right one that is done
-					if(req.getToken().equals(request.getToken()))
-					{
-						return req;
-					}
-					// Check if Ip needs to wait
-					// TODO: Remove negative before publishing!
-					if(req.getIp().equals(request.getIp()) && request.getRequestedTime() - req.getRequestedTime() <= -120)
-					{
-						request.setQueuePos(-2);
-						return request;
-					}
-				}
-			}
-			
-			synchronized(waitingRequests)
-			{
-				Iterator<QueueRequest> itr = waitingRequests.iterator();
-				while(itr.hasNext())
-				{
-					QueueRequest req = itr.next();
-					if(req.getToken().equals(request.getToken()))
-					{
-						return req;
-					}
-					// Check if ip already requested
-					if(false && req.getIp().equals(request.getIp()))
-					{
-						request.setQueuePos(-3);
-						return request;
-					}
-				}
-			}
+
+            // Set processing
+            if(request.getQueuePos() == 0){
+                request.setProcessing(true);
+                // TODO: notify processing thread
+            }
 
 			// add the token
 			request.setToken(new BigInteger(40, random).toString(32));
 			request.setOldReq();
 			request.setGo(false);
 			
-			// Add request to queue
-			synchronized(waitingRequests)
-			{
-				ListIterator<QueueRequest> itr = waitingRequests.listIterator();
-				while(itr.hasNext())
-				{
-					QueueRequest req = itr.next();
-					if(!itr.hasNext())
-					{
-						request.setQueuePos(itr.nextIndex());
-						itr.add(request); // Add request to the second to last position
-						itr.previous(); // Move cursor to second to last position
-						itr.set(req); // Set second to last request to req
-						itr.next(); // Move cursor to last position
-						itr.set(request); // Set last request to request
-					}
-				}
-				if(itr.nextIndex() == 0)
-				{
-					itr.add(request);
-				}
-			}
-			
-			try {
-				requestsToProcess.put(request);
-				System.out.println("Queue has " + requestsToProcess.size() + " requests");
-				System.out.println("Added request " + request.getToken() + " to queue.");
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			// Add request to db
+            em.getTransaction().begin();
+            em.persist(request);
+            em.getTransaction().commit();
+            System.out.println("Added request " + request.getToken() + " to queue.");
+
+            // Close database connection
+            em.close();
+            emf.close();
 			
 			return request;
 		}
-		
-		synchronized(completedRequests)
-		{
-			Iterator<QueueRequest> itr = completedRequests.iterator();
-			while(itr.hasNext())
-			{
-				QueueRequest req = itr.next();
-				
-				// Remove expired ones
-				if(req.isExpired())
-				{
-					itr.remove();
-				}
-				
-				// Get the right one that is done
-				if(req.getToken().equals(request.getToken()))
-				{
-					return req;
-				}
-			}
-		}
-		
-		synchronized(waitingRequests)
-		{
-			ListIterator<QueueRequest> itr = waitingRequests.listIterator();
-			while(itr.hasNext())
-			{
-				QueueRequest req = itr.next();
-				
-				// Remove -1 position requests
-				if(req.getQueuePos() == -1)
-				{
-					itr.remove();
-				}
-				
-				// Set first request to go
-				if(req.getQueuePos() == 0 && itr.nextIndex() == 1)
-				{
-					req.setProcessing(true);
-				}
-				
-				// Set position of request to position in list
-				req.setQueuePos(itr.nextIndex() - 1);
-				
-				// Set request to return to match actual request in list
-				if(req.getToken().equals(request.getToken()))
-				{
-					return req;
-				}
-			}
-		}
+
+        // Close database connection
+        em.close();
+        emf.close();
 		
 		// If any request makes it this far, then it is bad.
 		request.setQueuePos(-4);
@@ -208,55 +159,24 @@ public class PricingServiceImpl extends RemoteServiceServlet implements
 
 	@Override
 	public boolean removeRequest(QueueRequest request){
-		
-		boolean removed = false;
-		
-		synchronized(waitingRequests)
-		{
-			Iterator<QueueRequest> itr = waitingRequests.iterator();
-			while(itr.hasNext())
-			{
-				QueueRequest req = itr.next();
-				
-				req.setQueuePos(req.getQueuePos() - 1);
-				
-				// Get the right request
-				if(req.getToken().equals(request.getToken()))
-				{
-					// Remove the request from the waiting list
-					itr.remove();
-					System.out.println("Removed request " + req.getToken() + " from queue");
-					removed = true;
-				}
-			}
-		}
-		
-		if(removed)
-		{			
-			synchronized(completedRequests)
-			{				
-				ListIterator<QueueRequest> itr = completedRequests.listIterator();
-				itr.add(request);
-				System.out.println("Adding request " + request.getToken() + " to completed request list");
-			}
-		}
-		return removed;
-	}
-	
-	public void run()
-	{
-		System.out.println("Starting PricingServiceImpl thread for receiving processed requests");
-		
-		// Loop infintely to get processed requests
-		while(true)
-		{
-			try {
-				QueueRequest req = processedRequests.take();
-				removeRequest(req);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
+
+        // Open a database connection
+        // (create a new database if it doesn't exist yet):
+        EntityManagerFactory emf = Persistence.createEntityManagerFactory("$objectdb/db/requests.odb");
+        EntityManager em = emf.createEntityManager();
+
+        QueueRequest foundReq = em.find(QueueRequest.class, request.getToken());
+        if(foundReq == null)
+            return false;
+
+        em.getTransaction().begin();
+        em.remove(foundReq);
+        em.getTransaction().commit();
+
+        // Close database connection
+        em.close();
+        emf.close();
+
+        return true;
 	}
 }
