@@ -59,7 +59,7 @@ public class AccountPricer {
          "Local / Bine ai venit! /", "Local / Presa /", "Local / Mining (Italiano) /", "Local / Mining (Nederlands) /", "Local / 跳蚤市场 /", "Local / 山寨币 /", "Local / 媒体 /", 
          "Local / Ελληνικά (Greek) /", "Local / Mining (India) /", "Local / Marketplace (India) /", "Local / Regional Languages (India) /", "Local / Press & News from India / ", 
          "Local / Alt Coins (India) /", "Local / Buyer/ Seller Reputations (India) /", "Local / Off-Topic (India) /", "Local / Новости /", "Economy / Reputation /", 
-         "Local / Primeros pasos y ayuda / ", "Local / Primeiros Passos (Iniciantes) /", "Local / Alt-Currencies (Italiano) /", "Local / Türkçe (Turkish) /", "Local / Brasil /", 
+         "Local / Primeros pasos y ayuda / ", "Local / Primeiros Passos (Iniciantes) /", "Local / Alt-Currencies (Italiano) /", "Local / Türkçe (Turkish) /", "Local / Brasil /", "Local / Philippines ",
          "Local / Portugal /", "Local / Αγορά /", "Bitcoin / Group buys /", "Bitcoin / BitcoinJ /", "Local / Treffen /", "Local / Presse / ", "Local / Auktionen /", 
          "Local / Polski /", "Local / Beurzen /", "Local / Raduni/Meeting (Italiano) /", "Local / Off-Topic (Italiano) /", "Local / 挖矿 /", "Local / Alt Coins (Nederlands) /", 
          "Local / Off-topic (Nederlands) /", "Local / Altcoins (Français) /", "Local / Meetings (Nederlands) /", "Local / Altcoins (criptomonedas alternativas) /", "Local / Projektentwicklung /",

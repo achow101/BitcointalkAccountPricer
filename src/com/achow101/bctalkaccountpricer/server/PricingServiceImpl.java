@@ -51,8 +51,12 @@ public class PricingServiceImpl extends RemoteServiceServlet implements PricingS
 		EntityManager em = emf.createEntityManager();
 
         QueueRequestDB foundReq = em.find(QueueRequestDB.class, request.getToken());
-        if(foundReq != null)
+        if(foundReq != null) {
+            // Close database connection
+            em.close();
+            emf.close();
             return foundReq.getQueueRequest();
+        }
 
         // Get list of results
         CriteriaBuilder cb = em.getCriteriaBuilder();
