@@ -17,7 +17,6 @@
 package com.achow101.bctalkaccountpricer.client;
 
 import com.achow101.bctalkaccountpricer.shared.QueueRequest;
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.rpc.RemoteService;
 import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 

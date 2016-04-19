@@ -17,11 +17,8 @@
 
 package com.achow101.bctalkaccountpricer.shared;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
 import java.io.Serializable;
 
-@Entity
 public class QueueRequest implements Serializable{
 
 	private static final long serialVersionUID = -1012714783248122922L;
@@ -30,7 +27,6 @@ public class QueueRequest implements Serializable{
 	private boolean newRequest = true;
 	private String ip;
 	private long requestedTime;
-	@Id
     private String token = "NO TOKEN";
 	private String[] result;
 	private int uid = 0;

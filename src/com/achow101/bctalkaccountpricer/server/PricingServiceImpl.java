@@ -18,18 +18,11 @@ package com.achow101.bctalkaccountpricer.server;
 
 import java.math.BigInteger;
 import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
-import java.util.concurrent.BlockingQueue;
 
 import com.achow101.bctalkaccountpricer.client.PricingService;
 import com.achow101.bctalkaccountpricer.shared.QueueRequest;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
-import com.objectdb.o.QUE;
-import com.sun.org.apache.xpath.internal.operations.Bool;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -57,33 +50,33 @@ public class PricingServiceImpl extends RemoteServiceServlet implements PricingS
 		EntityManagerFactory emf = Persistence.createEntityManagerFactory("$objectdb/db/requests.odb");
 		EntityManager em = emf.createEntityManager();
 
-        QueueRequest foundReq = em.find(QueueRequest.class, request.getToken());
+        QueueRequestDB foundReq = em.find(QueueRequestDB.class, request.getToken());
         if(foundReq != null)
-            return foundReq;
+            return foundReq.getQueueRequest();
 
         // Get list of results
         CriteriaBuilder cb = em.getCriteriaBuilder();
-        CriteriaQuery<QueueRequest> q = cb.createQuery(QueueRequest.class);
-        Root<QueueRequest> reqs = q.from(QueueRequest.class);
+        CriteriaQuery<QueueRequestDB> q = cb.createQuery(QueueRequestDB.class);
+        Root<QueueRequestDB> reqs = q.from(QueueRequestDB.class);
         q.select(reqs);
-        TypedQuery<QueueRequest> query = em.createQuery(q);
-        List<QueueRequest> reqList = query.getResultList();
+        TypedQuery<QueueRequestDB> query = em.createQuery(q);
+        List<QueueRequestDB> reqList = query.getResultList();
 
         // Check if another request is processing
         boolean anotherIsProcessing = false;
-        CriteriaQuery<QueueRequest> qProcessing = cb.createQuery(QueueRequest.class);
-        Root<QueueRequest> rProcReqs = qProcessing.from(QueueRequest.class);
+        CriteriaQuery<QueueRequestDB> qProcessing = cb.createQuery(QueueRequestDB.class);
+        Root<QueueRequestDB> rProcReqs = qProcessing.from(QueueRequestDB.class);
         qProcessing.select(rProcReqs);
         ParameterExpression<Boolean> rProc = cb.parameter(Boolean.class);
         qProcessing.where(cb.equal(rProcReqs.get("processing"), rProc));
-        TypedQuery<QueueRequest> procQuery = em.createQuery(qProcessing);
-        List<QueueRequest> procReqList = procQuery.setParameter(rProc, true).getResultList();
+        TypedQuery<QueueRequestDB> procQuery = em.createQuery(qProcessing);
+        List<QueueRequestDB> procReqList = procQuery.setParameter(rProc, true).getResultList();
         if(procReqList.size() == 1)
             anotherIsProcessing = true;
 
         // Go through list and figure out what to do with requests
         int hiQueuePos = 0;
-        for(QueueRequest req : reqList)
+        for(QueueRequestDB req : reqList)
         {
             // Remove expired ones
             if(req.isExpired())
@@ -105,7 +98,7 @@ public class PricingServiceImpl extends RemoteServiceServlet implements PricingS
             }
 
             // Check if ip already requested
-            if (!false && req.getIp().equals(request.getIp()) && request.isNew() && !request.isPoll()) {
+            if (false && req.getIp().equals(request.getIp()) && request.isNew() && !request.isPoll()) {
                 request.setQueuePos(-3);
                 // Close database connection
                 em.close();
@@ -127,13 +120,6 @@ public class PricingServiceImpl extends RemoteServiceServlet implements PricingS
             // Find the highest queue position to set queue position
             if(req.getQueuePos() > hiQueuePos)
                 hiQueuePos = req.getQueuePos();
-
-            // Return matching req
-            if(req.getToken().equals(request.getToken()))
-                // Close database connection
-                em.close();
-                emf.close();
-                return req;
         }
 
 		if(request.isNew())
@@ -154,23 +140,27 @@ public class PricingServiceImpl extends RemoteServiceServlet implements PricingS
 			request.setGo(false);
 			
 			// Add request to db
+            QueueRequestDB requestDb = new QueueRequestDB(request);
             em.getTransaction().begin();
-            em.persist(request);
+            em.persist(requestDb);
             em.getTransaction().commit();
             System.out.println("Added request " + request.getToken() + " to queue.");
-
-            // Close database connection
-            em.close();
-            emf.close();
 
             // Set processing
             if(request.getQueuePos() == 0){
                 request.setProcessing(true);
+                em.getTransaction().begin();
+                requestDb.setProcessing(true);
+                em.getTransaction().commit();
                 synchronized (Config.processPricing)
                 {
-                    notify();
+                    Config.processPricing.notify();
                 }
             }
+
+            // Close database connection
+            em.close();
+            emf.close();
 			
 			return request;
 		}
@@ -192,7 +182,7 @@ public class PricingServiceImpl extends RemoteServiceServlet implements PricingS
         EntityManagerFactory emf = Persistence.createEntityManagerFactory("$objectdb/db/requests.odb");
         EntityManager em = emf.createEntityManager();
 
-        QueueRequest foundReq = em.find(QueueRequest.class, request.getToken());
+        QueueRequestDB foundReq = em.find(QueueRequestDB.class, request.getToken());
         if(foundReq == null)
             return false;
 

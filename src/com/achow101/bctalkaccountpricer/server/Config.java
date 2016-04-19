@@ -17,9 +17,6 @@
 
 package com.achow101.bctalkaccountpricer.server;
 
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 

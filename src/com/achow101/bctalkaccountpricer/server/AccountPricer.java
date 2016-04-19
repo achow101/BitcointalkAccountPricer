@@ -80,9 +80,9 @@ public class AccountPricer {
 	private boolean merch = false;
 	private int failCount = 0;
 	private int failRetries = 5;
-	private QueueRequest req;
+	private QueueRequestDB req;
 	
-	public AccountPricer(QueueRequest req)
+	public AccountPricer(QueueRequestDB req)
 	{
 		this.userId = req.getUid();
 		this.merch = req.isMerchant();

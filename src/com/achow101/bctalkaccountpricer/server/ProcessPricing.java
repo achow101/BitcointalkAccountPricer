@@ -18,9 +18,6 @@
 package com.achow101.bctalkaccountpricer.server;
 
 import java.util.List;
-import java.util.concurrent.BlockingQueue;
-
-import com.achow101.bctalkaccountpricer.shared.QueueRequest;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -41,10 +38,13 @@ public class ProcessPricing implements Runnable {
 		while(true)
 		{
             if(!processNext) {
-                try {
-                    wait();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+                synchronized (this)
+                {
+                    try {
+                        wait();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
             processNext = false;
@@ -54,15 +54,15 @@ public class ProcessPricing implements Runnable {
             EntityManagerFactory emf = Persistence.createEntityManagerFactory("$objectdb/db/requests.odb");
             EntityManager em = emf.createEntityManager();
             CriteriaBuilder cb = em.getCriteriaBuilder();
-            CriteriaQuery<QueueRequest> q = cb.createQuery(QueueRequest.class);
-            Root<QueueRequest> reqs = q.from(QueueRequest.class);
+            CriteriaQuery<QueueRequestDB> q = cb.createQuery(QueueRequestDB.class);
+            Root<QueueRequestDB> reqs = q.from(QueueRequestDB.class);
             q.select(reqs);
-            TypedQuery<QueueRequest> query = em.createQuery(q);
-            List<QueueRequest> reqList = query.getResultList();
+            TypedQuery<QueueRequestDB> query = em.createQuery(q);
+            List<QueueRequestDB> reqList = query.getResultList();
 
             // Find the request to process
-            QueueRequest reqToProcess = null;
-            for(QueueRequest req : reqList)
+            QueueRequestDB reqToProcess = null;
+            for(QueueRequestDB req : reqList)
             {
                 if(req.isProcessing())
                 {
@@ -73,19 +73,20 @@ public class ProcessPricing implements Runnable {
 
             // Price the request
             AccountPricer pricer = new AccountPricer(reqToProcess);
+            String[] priceData = pricer.getAccountData();
             System.out.println("Completed processing request " + reqToProcess.getToken());
 
             // Change status in db
             em.getTransaction().begin();
             reqToProcess.setProcessing(false);
-            reqToProcess.setResult(pricer.getAccountData());
+            reqToProcess.setResult(priceData);
             reqToProcess.setDone(true);
             reqToProcess.setCompletedTime(System.currentTimeMillis() / 1000L);
             reqToProcess.setQueuePos(-5);
             em.getTransaction().commit();
 
             // Decrement queue pos of all other requests
-            for(QueueRequest req : reqList)
+            for(QueueRequestDB req : reqList)
             {
                 if(req.getQueuePos() > 0) {
                     em.getTransaction().begin();
