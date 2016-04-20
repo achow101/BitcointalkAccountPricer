@@ -96,8 +96,7 @@ public class PricingServiceImpl extends RemoteServiceServlet implements PricingS
             request.setToken(new BigInteger(40, random).toString(32));
         }
 
-            // Go through list and figure out what to do with requests
-        int hiQueuePos = 0;
+            // Go through list and figure out what to do with
         for(QueueRequestDB req : reqList)
         {
             // Remove expired ones
@@ -139,17 +138,12 @@ public class PricingServiceImpl extends RemoteServiceServlet implements PricingS
                     e.printStackTrace();
                 }
             }
-
-            // Find the highest queue position to set queue position
-            if(req.getQueuePos() >= hiQueuePos)
-                hiQueuePos++;
         }
 
         // Queuing and adding request to DB
 		if(request.isNew())
         {
             // Set remaining stuff
-            request.setQueuePos(hiQueuePos);
             request.setOldReq();
 
 			// Add request to db
@@ -174,6 +168,11 @@ public class PricingServiceImpl extends RemoteServiceServlet implements PricingS
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+
+            // Set the queue position
+            em.getTransaction().begin();
+            requestDb.setQueuePos(requestsToProcess.size());
+            em.getTransaction().commit();
 
             // Close database connection
             em.close();
