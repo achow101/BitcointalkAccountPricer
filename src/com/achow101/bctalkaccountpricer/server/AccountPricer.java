@@ -658,7 +658,7 @@ public class AccountPricer {
 					failCount++;
 					if(failCount >= failRetries)
 					{
-						return -2;
+						return 0;
 					}
 					Thread.sleep(20000);
 				} catch (InterruptedException e1) {

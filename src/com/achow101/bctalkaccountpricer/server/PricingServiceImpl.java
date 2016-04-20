@@ -51,14 +51,13 @@ public class PricingServiceImpl extends RemoteServiceServlet implements PricingS
 	{
 		// Open a database connection
 		// (create a new database if it doesn't exist yet):
-		EntityManagerFactory emf = Persistence.createEntityManagerFactory("$objectdb/db/requests.odb");
+		EntityManagerFactory emf = (EntityManagerFactory)getServletContext().getAttribute("emf");
 		EntityManager em = emf.createEntityManager();
 
         QueueRequestDB foundReq = em.find(QueueRequestDB.class, request.getToken());
         if(foundReq != null) {
             // Close database connection
             em.close();
-            emf.close();
             return foundReq.getQueueRequest();
         }
 
@@ -114,7 +113,6 @@ public class PricingServiceImpl extends RemoteServiceServlet implements PricingS
                 request.setQueuePos(-2);
                 // Close database connection
                 em.close();
-                emf.close();
                 return request;
             }
 
@@ -123,7 +121,6 @@ public class PricingServiceImpl extends RemoteServiceServlet implements PricingS
                 request.setQueuePos(-3);
                 // Close database connection
                 em.close();
-                emf.close();
                 return request;
             }
 
@@ -176,14 +173,12 @@ public class PricingServiceImpl extends RemoteServiceServlet implements PricingS
 
             // Close database connection
             em.close();
-            emf.close();
 
 			return request;
 		}
 
         // Close database connection
         em.close();
-        emf.close();
 		
 		// If any request makes it this far, then it is bad.
 		request.setQueuePos(-4);
@@ -195,7 +190,7 @@ public class PricingServiceImpl extends RemoteServiceServlet implements PricingS
 
         // Open a database connection
         // (create a new database if it doesn't exist yet):
-        EntityManagerFactory emf = Persistence.createEntityManagerFactory("$objectdb/db/requests.odb");
+        EntityManagerFactory emf = (EntityManagerFactory)getServletContext().getAttribute("emf");
         EntityManager em = emf.createEntityManager();
 
         QueueRequestDB foundReq = em.find(QueueRequestDB.class, request.getToken());
@@ -208,7 +203,6 @@ public class PricingServiceImpl extends RemoteServiceServlet implements PricingS
 
         // Close database connection
         em.close();
-        emf.close();
 
         return true;
 	}
@@ -225,7 +219,7 @@ public class PricingServiceImpl extends RemoteServiceServlet implements PricingS
                 QueueRequestDB req = processedRequests.take();
 
                 // Set its state in the db
-                EntityManagerFactory emf = Persistence.createEntityManagerFactory("$objectdb/db/requests.odb");
+                EntityManagerFactory emf = (EntityManagerFactory)getServletContext().getAttribute("emf");
                 EntityManager em = emf.createEntityManager();
                 QueueRequestDB foundReq = em.find(QueueRequestDB.class, req.getToken());
                 em.getTransaction().begin();
@@ -252,11 +246,12 @@ public class PricingServiceImpl extends RemoteServiceServlet implements PricingS
                         request.setQueuePos(request.getQueuePos() - 1);
                         em.getTransaction().commit();
                     }
+                    if(request.getQueuePos() == 0 && !request.isProcessing())
+                        request.setProcessing(true);
                 }
 
                 // Close database connection
                 em.close();
-                emf.close();
             } catch (InterruptedException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();

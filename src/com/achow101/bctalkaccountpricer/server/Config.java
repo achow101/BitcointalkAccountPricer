@@ -17,6 +17,8 @@
 
 package com.achow101.bctalkaccountpricer.server;
 
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.Persistence;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
@@ -32,12 +34,17 @@ public class Config implements ServletContextListener {
 
 	@Override
 	public void contextDestroyed(ServletContextEvent arg0) {
-		// TODO Auto-generated method stub
-		
+        EntityManagerFactory emf = (EntityManagerFactory)arg0.getServletContext().getAttribute("emf");
+        emf.close();
 	}
 
 	@Override
 	public void contextInitialized(ServletContextEvent arg0) {
+        // ObjectDB database intializer
+        EntityManagerFactory emf = Persistence.createEntityManagerFactory("$objectdb/db/guest.odb");
+        arg0.getServletContext().setAttribute("emf", emf);
+
+        // Start threads
 		(new Thread(new ProcessPricing())).start();
 		(new Thread(new PricingServiceImpl())).start();
 	}

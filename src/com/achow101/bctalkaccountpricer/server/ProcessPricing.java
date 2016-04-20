@@ -38,7 +38,6 @@ public class ProcessPricing implements Runnable {
 		System.out.println("Starting ProcessPricing thread for processing the requests");
 		
 		// Infinte loop so that it runs indefinitely
-        boolean processNext = false;
 		while(true)
 		{
             try {
