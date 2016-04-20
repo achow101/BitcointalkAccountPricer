@@ -29,9 +29,7 @@ import javax.persistence.Id;
 @Entity
 public class QueueRequestDB {
 
-    @Id
-    private String token = "NO TOKEN";
-    private boolean go = false;
+    @Id private String token = "NO TOKEN";
     private int pos = -6;
     private boolean newRequest = true;
     private String ip;
@@ -49,7 +47,6 @@ public class QueueRequestDB {
 
     public QueueRequestDB(QueueRequest req)
     {
-        go = req.getGo();
         completedTime = req.getCompletedTime();
         done = req.isDone();
         expirationTime = req.getExpirationTime();
@@ -68,7 +65,6 @@ public class QueueRequestDB {
     public QueueRequest getQueueRequest()
     {
         QueueRequest req = new QueueRequest();
-        req.setGo(go);
         req.setCompletedTime(completedTime);
         req.setDone(done);
         req.setExpirationTime(expirationTime);
@@ -84,16 +80,6 @@ public class QueueRequestDB {
         if(!newRequest)
             req.setOldReq();
         return req;
-    }
-
-    public boolean getGo()
-    {
-        return go;
-    }
-
-    public void setGo(boolean goNoGo)
-    {
-        go = goNoGo;
     }
 
     public int getQueuePos()

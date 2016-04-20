@@ -310,15 +310,6 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 						}
 					};
 					requestTimer.scheduleRepeating(2000);
-					
-					Timer setOldReqTimer = new Timer()
-					{
-						public void run()
-						{
-							request.setOldReq();
-						}
-					};
-					setOldReqTimer.schedule(2001);
 
 		}			
 	}

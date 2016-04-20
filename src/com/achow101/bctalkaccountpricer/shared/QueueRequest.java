@@ -38,17 +38,7 @@ public class QueueRequest implements Serializable{
 	private boolean poll = false;
 	
 	public QueueRequest(){}
-	
-	public boolean getGo()
-	{
-		return go;
-	}
-	
-	public void setGo(boolean goNoGo)
-	{
-		go = goNoGo;
-	}
-	
+
 	public int getQueuePos()
 	{
 		return pos;

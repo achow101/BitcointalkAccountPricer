@@ -22,9 +22,13 @@ import javax.servlet.ServletContextListener;
 
 import com.achow101.bctalkaccountpricer.shared.QueueRequest;
 
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+
 public class Config implements ServletContextListener {
 
-	public static ProcessPricing processPricing = new ProcessPricing();
+	public static BlockingQueue<QueueRequestDB> requestsToProcess = new LinkedBlockingQueue<QueueRequestDB>();
+	public static BlockingQueue<QueueRequestDB> processedRequests = new LinkedBlockingQueue<QueueRequestDB>();
 
 	@Override
 	public void contextDestroyed(ServletContextEvent arg0) {
@@ -34,8 +38,7 @@ public class Config implements ServletContextListener {
 
 	@Override
 	public void contextInitialized(ServletContextEvent arg0) {
-		Thread t = new Thread(processPricing);
-        t.start();
+		(new Thread(new ProcessPricing())).start();
+		(new Thread(new PricingServiceImpl())).start();
 	}
-
 }

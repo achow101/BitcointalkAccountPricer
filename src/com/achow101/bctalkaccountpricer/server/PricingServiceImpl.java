@@ -19,6 +19,7 @@ package com.achow101.bctalkaccountpricer.server;
 import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
 
 import com.achow101.bctalkaccountpricer.client.PricingService;
 import com.achow101.bctalkaccountpricer.shared.QueueRequest;
@@ -38,9 +39,12 @@ import javax.persistence.criteria.Root;
  * The server-side implementation of the RPC service.
  */
 @SuppressWarnings("serial")
-public class PricingServiceImpl extends RemoteServiceServlet implements PricingService {
+public class PricingServiceImpl extends RemoteServiceServlet implements PricingService, Runnable {
 
 	private static SecureRandom random = new SecureRandom();
+
+    private static BlockingQueue<QueueRequestDB> requestsToProcess = Config.requestsToProcess;
+    private static BlockingQueue<QueueRequestDB> processedRequests = Config.processedRequests;
 
 	@Override
 	public QueueRequest queueServer(QueueRequest request)
@@ -78,12 +82,26 @@ public class PricingServiceImpl extends RemoteServiceServlet implements PricingS
         if(procReqList.size() == 1)
             anotherIsProcessing = true;
 
-        // Go through list and figure out what to do with requests
+        // Prepping request for other stuff
+        if(request.isNew()) {
+            // Set remaining fields
+            request.setRequestedTime(System.currentTimeMillis() / 1000L);
+            request.setIp(getThreadLocalRequest().getRemoteAddr());
+            if (request.getToken().equals("NO TOKEN") && request.getUid() == 0) {
+                request.setQueuePos(-4);
+                return request;
+            }
+
+            // add the token
+            request.setToken(new BigInteger(40, random).toString(32));
+        }
+
+            // Go through list and figure out what to do with requests
         int hiQueuePos = 0;
         for(QueueRequestDB req : reqList)
         {
             // Remove expired ones
-            if(req.isExpired())
+            if(req.isDone() && req.isExpired())
             {
                 // Remove request from db
                 em.getTransaction().begin();
@@ -93,7 +111,7 @@ public class PricingServiceImpl extends RemoteServiceServlet implements PricingS
 
             // Check if Ip needs to wait
             // TODO: Remove negative before publishing!
-            if (!request.isNew() && req.getIp().equals(request.getIp()) && request.getRequestedTime() - req.getRequestedTime() <= -120 && !request.isPoll()) {
+            if (request.isNew() && req.getIp().equals(request.getIp()) && request.getRequestedTime() - req.getRequestedTime() <= -120 && !request.isPoll()) {
                 request.setQueuePos(-2);
                 // Close database connection
                 em.close();
@@ -115,40 +133,30 @@ public class PricingServiceImpl extends RemoteServiceServlet implements PricingS
                 em.getTransaction().begin();
                 req.setProcessing(true);
                 em.getTransaction().commit();
-                synchronized (Config.processPricing)
-                {
-                    notify();
+                try {
+                    requestsToProcess.put(req);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
             }
 
             // Find the highest queue position to set queue position
-            if(req.getQueuePos() > hiQueuePos)
-                hiQueuePos = req.getQueuePos();
+            if(req.getQueuePos() >= hiQueuePos)
+                hiQueuePos++;
         }
 
+        // Queuing and adding request to DB
 		if(request.isNew())
-		{
-			// Set remaining fields
-			request.setIp(getThreadLocalRequest().getRemoteAddr());
-			request.setRequestedTime(System.currentTimeMillis() / 1000L);
+        {
+            // Set remaining stuff
             request.setQueuePos(hiQueuePos);
-			if(request.getToken().equals("NO TOKEN") && request.getUid() == 0)
-			{
-				request.setQueuePos(-4);
-				return request;
-			}
+            request.setOldReq();
 
-			// add the token
-			request.setToken(new BigInteger(40, random).toString(32));
-			request.setOldReq();
-			request.setGo(false);
-			
 			// Add request to db
             QueueRequestDB requestDb = new QueueRequestDB(request);
             em.getTransaction().begin();
             em.persist(requestDb);
             em.getTransaction().commit();
-            System.out.println("Added request " + request.getToken() + " to queue.");
 
             // Set processing
             if(request.getQueuePos() == 0){
@@ -156,16 +164,21 @@ public class PricingServiceImpl extends RemoteServiceServlet implements PricingS
                 em.getTransaction().begin();
                 requestDb.setProcessing(true);
                 em.getTransaction().commit();
-                synchronized (Config.processPricing)
-                {
-                    Config.processPricing.notify();
-                }
+            }
+
+            // Add request to queue
+            try {
+                requestsToProcess.put(requestDb);
+                System.out.println("Queue has " + requestsToProcess.size() + " requests");
+                System.out.println("Added request " + request.getToken() + " to queue.");
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
 
             // Close database connection
             em.close();
             emf.close();
-			
+
 			return request;
 		}
 
@@ -200,4 +213,55 @@ public class PricingServiceImpl extends RemoteServiceServlet implements PricingS
 
         return true;
 	}
+
+    public void run()
+    {
+        System.out.println("Starting PricingServiceImpl thread for receiving processed requests");
+
+        // Loop infintely to get processed requests
+        while(true)
+        {
+            try {
+                // Take the request from the queue
+                QueueRequestDB req = processedRequests.take();
+
+                // Set its state in the db
+                EntityManagerFactory emf = Persistence.createEntityManagerFactory("$objectdb/db/requests.odb");
+                EntityManager em = emf.createEntityManager();
+                QueueRequestDB foundReq = em.find(QueueRequestDB.class, req.getToken());
+                em.getTransaction().begin();
+                foundReq.setProcessing(req.isProcessing());
+                foundReq.setResult(req.getResult());
+                foundReq.setQueuePos(req.getQueuePos());
+                foundReq.setCompletedTime(req.getCompletedTime());
+                foundReq.setDone(req.isDone());
+                em.getTransaction().commit();
+
+                // Set queue position of other requests
+                CriteriaBuilder cb = em.getCriteriaBuilder();
+                CriteriaQuery<QueueRequestDB> q = cb.createQuery(QueueRequestDB.class);
+                Root<QueueRequestDB> reqs = q.from(QueueRequestDB.class);
+                q.select(reqs);
+                TypedQuery<QueueRequestDB> query = em.createQuery(q);
+                List<QueueRequestDB> reqList = query.getResultList();
+
+                for(QueueRequestDB request : reqList)
+                {
+                    if(request.getQueuePos() > 0)
+                    {
+                        em.getTransaction().begin();
+                        request.setQueuePos(request.getQueuePos() - 1);
+                        em.getTransaction().commit();
+                    }
+                }
+
+                // Close database connection
+                em.close();
+                emf.close();
+            } catch (InterruptedException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+    }
 }
