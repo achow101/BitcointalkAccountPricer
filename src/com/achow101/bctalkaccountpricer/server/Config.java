@@ -32,17 +32,17 @@ public class Config implements ServletContextListener {
 	public static BlockingQueue<QueueRequestDB> requestsToProcess = new LinkedBlockingQueue<QueueRequestDB>();
 	public static BlockingQueue<QueueRequestDB> processedRequests = new LinkedBlockingQueue<QueueRequestDB>();
 
+    public static EntityManagerFactory emf;
+
 	@Override
 	public void contextDestroyed(ServletContextEvent arg0) {
-        EntityManagerFactory emf = (EntityManagerFactory)arg0.getServletContext().getAttribute("emf");
         emf.close();
 	}
 
 	@Override
 	public void contextInitialized(ServletContextEvent arg0) {
         // ObjectDB database intializer
-        EntityManagerFactory emf = Persistence.createEntityManagerFactory("$objectdb/db/guest.odb");
-        arg0.getServletContext().setAttribute("emf", emf);
+        emf = Persistence.createEntityManagerFactory("$objectdb/db/requests.odb");
 
         // Start threads
 		(new Thread(new ProcessPricing())).start();

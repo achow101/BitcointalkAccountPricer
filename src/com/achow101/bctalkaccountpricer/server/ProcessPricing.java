@@ -53,7 +53,7 @@ public class ProcessPricing implements Runnable {
                 req.setCompletedTime(System.currentTimeMillis() / 1000L);
                 req.setProcessing(false);
                 req.setQueuePos(-5);
-                System.out.println("Completed processing request " + req.getToken());
+                System.out.println("Completed pricing request " + req.getToken());
 
                 //Pass the data back to PricingServiceImpl thread
                 processedRequests.put(req);

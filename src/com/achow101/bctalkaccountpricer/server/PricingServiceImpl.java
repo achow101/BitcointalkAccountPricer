@@ -46,12 +46,13 @@ public class PricingServiceImpl extends RemoteServiceServlet implements PricingS
     private static BlockingQueue<QueueRequestDB> requestsToProcess = Config.requestsToProcess;
     private static BlockingQueue<QueueRequestDB> processedRequests = Config.processedRequests;
 
+    private static EntityManagerFactory emf = Config.emf;
+
 	@Override
 	public QueueRequest queueServer(QueueRequest request)
 	{
 		// Open a database connection
 		// (create a new database if it doesn't exist yet):
-		EntityManagerFactory emf = (EntityManagerFactory)getServletContext().getAttribute("emf");
 		EntityManager em = emf.createEntityManager();
 
         QueueRequestDB foundReq = em.find(QueueRequestDB.class, request.getToken());
@@ -190,7 +191,6 @@ public class PricingServiceImpl extends RemoteServiceServlet implements PricingS
 
         // Open a database connection
         // (create a new database if it doesn't exist yet):
-        EntityManagerFactory emf = (EntityManagerFactory)getServletContext().getAttribute("emf");
         EntityManager em = emf.createEntityManager();
 
         QueueRequestDB foundReq = em.find(QueueRequestDB.class, request.getToken());
@@ -219,7 +219,6 @@ public class PricingServiceImpl extends RemoteServiceServlet implements PricingS
                 QueueRequestDB req = processedRequests.take();
 
                 // Set its state in the db
-                EntityManagerFactory emf = (EntityManagerFactory)getServletContext().getAttribute("emf");
                 EntityManager em = emf.createEntityManager();
                 QueueRequestDB foundReq = em.find(QueueRequestDB.class, req.getToken());
                 em.getTransaction().begin();
@@ -246,12 +245,17 @@ public class PricingServiceImpl extends RemoteServiceServlet implements PricingS
                         request.setQueuePos(request.getQueuePos() - 1);
                         em.getTransaction().commit();
                     }
-                    if(request.getQueuePos() == 0 && !request.isProcessing())
+                    if(request.getQueuePos() == 0 && !request.isProcessing()) {
+                        em.getTransaction().begin();
                         request.setProcessing(true);
+                        em.getTransaction().commit();
+                    }
                 }
 
                 // Close database connection
                 em.close();
+
+                System.out.println("Completed processing request " + req.getToken() + ". Removed from queue");
             } catch (InterruptedException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
