@@ -17,13 +17,19 @@
 
 package com.achow101.bctalkaccountpricer.server;
 
+import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
+import javax.persistence.TypedQuery;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Root;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
 import com.achow101.bctalkaccountpricer.shared.QueueRequest;
 
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -54,7 +60,7 @@ public class Config implements ServletContextListener {
                 e.printStackTrace();
             }
         }
-        
+
         // Close db
         System.out.println("Closing database");
         emf.close();
@@ -66,7 +72,39 @@ public class Config implements ServletContextListener {
 	public void contextInitialized(ServletContextEvent arg0) {
         // ObjectDB database intializer
 		System.out.println("Opening database");
-        emf = Persistence.createEntityManagerFactory("$objectdb/db/requests.odb");
+        emf = Persistence.createEntityManagerFactory("../../db/requests.odb");
+
+        // Get requests that need to be queued and processed
+        EntityManager em = emf.createEntityManager();
+        CriteriaBuilder cb = em.getCriteriaBuilder();
+        CriteriaQuery<QueueRequestDB> q = cb.createQuery(QueueRequestDB.class);
+        Root<QueueRequestDB> reqs = q.from(QueueRequestDB.class);
+        q.select(reqs);
+        TypedQuery<QueueRequestDB> query = em.createQuery(q);
+        List<QueueRequestDB> reqList = query.getResultList();
+        int index = 0;
+        int nextQueuePos = 0;
+        while(!reqList.isEmpty())
+        {
+            QueueRequestDB req = reqList.get(index);
+            if(req.getQueuePos() < 0)
+                reqList.remove(req);
+            if(req.getQueuePos() == nextQueuePos)
+            {
+                try {
+                    requestsToProcess.put(req);
+                    System.out.println("Placing " + req.getToken() + " back into queue");
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                reqList.remove(req);
+                nextQueuePos++;
+            }
+            if(index < reqList.size() - 1)
+                index++;
+            else
+                index = 0;
+        }
 
         // Start threads
 		processPricing = new ProcessPricing();
