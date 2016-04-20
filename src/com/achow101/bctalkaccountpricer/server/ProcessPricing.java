@@ -32,13 +32,15 @@ public class ProcessPricing implements Runnable {
 
     private static BlockingQueue<QueueRequestDB> requestsToProcess = Config.requestsToProcess;
     private static BlockingQueue<QueueRequestDB> processedRequests = Config.processedRequests;
+
+    private volatile boolean stop = false;
 	
 	public void run()
 	{
 		System.out.println("Starting ProcessPricing thread for processing the requests");
 		
 		// Infinte loop so that it runs indefinitely
-		while(true)
+		while(!stop)
 		{
             try {
                 // Get request from PricingServiceImpl thread
@@ -63,5 +65,11 @@ public class ProcessPricing implements Runnable {
                 e1.printStackTrace();
             }
 		}
+        System.out.println("ProcessPricing thread stopped.");
 	}
+
+    public void stopThread()
+    {
+        stop = true;
+    }
 }

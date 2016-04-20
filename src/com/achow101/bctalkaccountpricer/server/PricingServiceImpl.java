@@ -48,6 +48,8 @@ public class PricingServiceImpl extends RemoteServiceServlet implements PricingS
 
     private static EntityManagerFactory emf = Config.emf;
 
+    private volatile boolean stop = false;
+
 	@Override
 	public QueueRequest queueServer(QueueRequest request)
 	{
@@ -212,7 +214,7 @@ public class PricingServiceImpl extends RemoteServiceServlet implements PricingS
         System.out.println("Starting PricingServiceImpl thread for receiving processed requests");
 
         // Loop infintely to get processed requests
-        while(true)
+        while(!stop)
         {
             try {
                 // Take the request from the queue
@@ -261,5 +263,11 @@ public class PricingServiceImpl extends RemoteServiceServlet implements PricingS
                 e.printStackTrace();
             }
         }
+        System.out.println("PricingServiceImpl thread stopped.");
+    }
+
+    public void stopThread()
+    {
+        stop = true;
     }
 }

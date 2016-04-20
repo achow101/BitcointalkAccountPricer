@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
 <!--
   ~ Copyright (C) 2016  Andrew Chow
   ~
@@ -16,29 +17,29 @@
   ~ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   -->
 <web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee 
+         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee
               http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
          version="2.5"
          xmlns="http://java.sun.com/xml/ns/javaee">
 
-  <!-- Servlets -->
-  <servlet>
-    <servlet-name>pricingServlet</servlet-name>
-    <servlet-class>com.achow101.bctalkaccountpricer.server.PricingServiceImpl</servlet-class>
-  </servlet>
-  
-  <servlet-mapping>
-    <servlet-name>pricingServlet</servlet-name>
-    <url-pattern>/bitcointalk_account_pricer/pricing</url-pattern>
-  </servlet-mapping>
-  
-  <listener>
-       <listener-class>com.achow101.bctalkaccountpricer.server.Config</listener-class>
-  </listener>
-  
-  <!-- Default page to serve -->
-  <welcome-file-list>
-    <welcome-file>Bitcointalk_Account_Pricer.html</welcome-file>
-  </welcome-file-list>
+    <!-- Servlets -->
+    <servlet>
+        <servlet-name>pricingServlet</servlet-name>
+        <servlet-class>com.achow101.bctalkaccountpricer.server.PricingServiceImpl</servlet-class>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>pricingServlet</servlet-name>
+        <url-pattern>/bitcointalk_account_pricer/pricing</url-pattern>
+    </servlet-mapping>
+
+    <listener>
+        <listener-class>com.achow101.bctalkaccountpricer.server.Config</listener-class>
+    </listener>
+
+    <!-- Default page to serve -->
+    <welcome-file-list>
+        <welcome-file>Bitcointalk_Account_Pricer.html</welcome-file>
+    </welcome-file-list>
 
 </web-app>
