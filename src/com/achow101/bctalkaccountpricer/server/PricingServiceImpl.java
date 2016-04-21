@@ -61,7 +61,7 @@ public class PricingServiceImpl extends RemoteServiceServlet implements PricingS
         if(foundReq != null) {
             // Close database connection
             em.close();
-            return foundReq.getQueueRequest();
+            return foundReq.getQueueRequest().sanitizeForUser();
         }
 
         // Get list of results
@@ -91,7 +91,7 @@ public class PricingServiceImpl extends RemoteServiceServlet implements PricingS
             request.setIp(getThreadLocalRequest().getRemoteAddr());
             if (request.getToken().equals("NO TOKEN") && request.getUid() == 0) {
                 request.setQueuePos(-4);
-                return request;
+                return request.sanitizeForUser();
             }
 
             // add the token
@@ -116,7 +116,7 @@ public class PricingServiceImpl extends RemoteServiceServlet implements PricingS
                 request.setQueuePos(-2);
                 // Close database connection
                 em.close();
-                return request;
+                return request.sanitizeForUser();
             }
 
             // Check if ip already requested
@@ -124,7 +124,7 @@ public class PricingServiceImpl extends RemoteServiceServlet implements PricingS
                 request.setQueuePos(-3);
                 // Close database connection
                 em.close();
-                return request;
+                return request.sanitizeForUser();
             }
 
 			// Set first request go
@@ -177,7 +177,7 @@ public class PricingServiceImpl extends RemoteServiceServlet implements PricingS
             // Close database connection
             em.close();
 
-			return request;
+			return request.sanitizeForUser();
 		}
 
         // Close database connection
@@ -185,7 +185,7 @@ public class PricingServiceImpl extends RemoteServiceServlet implements PricingS
 		
 		// If any request makes it this far, then it is bad.
 		request.setQueuePos(-4);
-		return request;
+		return request.sanitizeForUser();
 	}
 
 	@Override

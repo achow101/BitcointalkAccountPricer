@@ -38,7 +38,7 @@ public class QueueRequestDB {
     private int uid = 0;
     private boolean processing = false;
     private boolean done = false;
-    private long expirationTime = 604800; // 1 week
+    private long expirationTime = 604800 * 2; // 2 weeks
     private boolean merch;
     private long completedTime;
     private boolean poll = false;
