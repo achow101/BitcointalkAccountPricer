@@ -57,4 +57,9 @@ public class Section
 			else
 				return name + ": " + numPosts + " Posts";
 		}
+
+		public int getNumPosts()
+		{
+			return numPosts;
+		}
 	}

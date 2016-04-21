@@ -19,9 +19,7 @@ package com.achow101.bctalkaccountpricer.server;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -30,8 +28,6 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-
-import com.achow101.bctalkaccountpricer.shared.QueueRequest;
 
 public class AccountPricer {
 	
@@ -379,7 +375,15 @@ public class AccountPricer {
 		{
 			postedAddresses[i] = addresses.get(i - 2).toString();
 		}
-		
+
+		// Sort posts sections by number of posts in descending order
+		Collections.sort(postsSections, new Comparator<Section>() {
+			public int compare(Section o1, Section o2) {
+				return o1.getNumPosts() - o2.getNumPosts();
+			}
+		});
+        Collections.reverse(postsSections);
+
 		// Put posts info into a string array
 		String[] postsBreakdown = new String[postsSections.size() + 1];
 		postsBreakdown[0] = "<b>Post Sections Breakdown</b>";
