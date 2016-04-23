@@ -258,8 +258,7 @@ public class PricingServiceImpl extends RemoteServiceServlet implements PricingS
                 em.close();
 
                 System.out.println("Completed processing request " + req.getToken() + ". Removed from queue");
-            } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
