@@ -120,7 +120,7 @@ public class PricingServiceImpl extends RemoteServiceServlet implements PricingS
             }
 
             // Check if ip already requested
-            if (false && req.getIp().equals(request.getIp()) && request.isNew() && !request.isPoll()) {
+            if (false && req.getIp().equals(request.getIp()) && req.getQueuePos() >= 0 && request.isNew() && !request.isPoll()) {
                 request.setQueuePos(-3);
                 // Close database connection
                 em.close();

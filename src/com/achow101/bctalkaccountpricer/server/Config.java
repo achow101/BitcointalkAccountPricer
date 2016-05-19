@@ -49,8 +49,10 @@ public class Config implements ServletContextListener {
 	public void contextDestroyed(ServletContextEvent arg0) {
 
 		// Stop threads
-		processPricing.stopThread();
-		pricingService.stopThread();
+        if(processPricingThread.isAlive())
+		    processPricing.stopThread();
+        if(processPricingThread.isAlive())
+		    pricingService.stopThread();
 
         while(!pricingServiceThread.isAlive() || !processPricingThread.isAlive())
         {

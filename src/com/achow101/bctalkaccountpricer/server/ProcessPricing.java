@@ -60,7 +60,7 @@ public class ProcessPricing implements Runnable {
                 //Pass the data back to PricingServiceImpl thread
                 processedRequests.put(req);
 
-            } catch (InterruptedException e1) {
+            } catch (Exception e1) {
                 // TODO Auto-generated catch block
                 e1.printStackTrace();
             }
