@@ -531,7 +531,7 @@ public class AccountPricer {
 		output[2] = "Posts: " + postcount + ((merch) ? "+" : "");
 		output[3] = "Activity: " + activity + ((merch) ? "+" : "") + " (" + rank + ")";
 		output[4] = "Potential Activity: " + potActivity + ((merch) ? "+" : "") + " (Potential " + potRank + ")";
-		output[5] = "Post Quality: " + postQuality + " - " + (postRatio * 100) + "%";
+		output[5] = "Post Quality: " + postQuality + " (" + new DecimalFormat("##.00").format(postRatio * 100) + "%)";
 		output[6] = "Trust: " + trust;
 		output[7] = "Estimated Price: " + dfmt.format(price);
 		
