@@ -70,7 +70,8 @@ public class AccountPricer {
          "Local / Jual Beli /", "Local / Mining (Bahasa Indonesia) /", "Local / Mining (Ελληνικά) /", "Local / 离题万里 /", "Alternate cryptocurrencies / Service Announcements (Altcoins) /", 
          "Alternate cryptocurrencies / Service Discussion (Altcoins) /", "Alternate cryptocurrencies / Pools (Altcoins) /", "Local / Gambling (Italiano) /", "Local / Hrvatski (Croatian) /", 
          "Local / Servicios / ", "Local / Trading y especulación /", "Local / Servicios / ", "Local / Discussioni avanzate e sviluppo /", "Local / Desenvolvimento & Discussões Técnicas /", 
-         "Economy / Investor-based games /", "Local / Débutants /", "Local / Échanges /", "Local / Produits et services /", "Local / Petites annonces /", "Economy / Micro Earnings /", "Economy / Collectibles /"};
+         "Economy / Investor-based games /", "Local / Débutants /", "Local / Échanges /", "Local / Produits et services /", "Local / Petites annonces /", "Economy / Micro Earnings /", "Economy / Collectibles /",
+	     "Local / Philippines /", "Local / Trgovina /", "Local / Altcoins (Hrvatski) /", "Economy / Online Wallets /", "Economy / Exchanges /"};
 	
 	private int userId = 3;
 	private boolean merch = false;
