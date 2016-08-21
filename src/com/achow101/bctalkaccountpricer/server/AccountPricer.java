@@ -443,6 +443,9 @@ public class AccountPricer {
 			case "Hero Member": potActToNext = 775 - potActivity;
 				nextPotRank = "Legendary";
 				break;
+			case "Legendary": potActToNext = 0;
+				nextPotRank = "Already the highest Rank";
+                break;
 			case "Legendary *Note: Not guaranteed; The account can become Legendary anywhere between 775 and 1030": potActToNext = 0;
 				nextPotRank = "Already the highest Rank";
 				break;
@@ -675,12 +678,16 @@ public class AccountPricer {
 		{
 			rank = "Sr. Member";
 		}
-		else if(activity >= 480)
+		else if(activity >= 480 && activity < 775)
 		{
 			rank = "Hero Member";
 		}
+		else if(activity >= 1030)
+		{
+			rank = "Legendary";
+		}
 		
-		if(activity >= 775 && (isLegendary || potential))
+		if(activity >= 775 && activity < 1030 && (isLegendary || potential))
 		{
 			rank = "Legendary";
 			if(potential && !isLegendary)
