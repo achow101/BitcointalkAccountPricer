@@ -260,7 +260,7 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 											activityLabel.setText(result.getResult()[3]);
 											potActivityLabel.setText(result.getResult()[4]);
 											postQualityLabel.setText(result.getResult()[5]);
-											postQualityLabel.setText(result.getResult()[6]);
+											avgCharLabel.setText(result.getResult()[6]);
 											trustLabel.setText(result.getResult()[7]);
 											priceLabel.setText(result.getResult()[8]);
 											int indexOfLastAct = 0;
