@@ -77,6 +77,8 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 		final Label activityLabel = new Label();
 		final Label potActivityLabel = new Label();
 		final Label postQualityLabel = new Label();
+		final Label weeksToPotRankLabel = new Label();
+		final Label potActToPotRankLabel = new Label();
 		final Label avgCharLabel = new Label();
 		final Label trustLabel = new Label();
 		final Label priceLabel = new Label();
@@ -102,6 +104,8 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 		RootPanel.get("postsLabelContainer").add(postsLabel);
 		RootPanel.get("activityLabelContainer").add(activityLabel);
 		RootPanel.get("potActivityLabelContainer").add(potActivityLabel);
+		RootPanel.get("weeksToPotRankLabelContainer").add(weeksToPotRankLabel);
+		RootPanel.get("potActToPotRankLabelContainer").add(potActToPotRankLabel);
 		RootPanel.get("postQualityLabelContainer").add(postQualityLabel);
 		RootPanel.get("avgCharLabelContainer").add(avgCharLabel);
 		RootPanel.get("trustLabelContainer").add(trustLabel);
@@ -259,13 +263,15 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 											postsLabel.setText(result.getResult()[2]);
 											activityLabel.setText(result.getResult()[3]);
 											potActivityLabel.setText(result.getResult()[4]);
-											postQualityLabel.setText(result.getResult()[5]);
-											avgCharLabel.setText(result.getResult()[6]);
-											trustLabel.setText(result.getResult()[7]);
-											priceLabel.setText(result.getResult()[8]);
+											weeksToPotRankLabel.setText(result.getResult()[5]);
+											potActToPotRankLabel.setText(result.getResult()[6]);
+											postQualityLabel.setText(result.getResult()[7]);
+											avgCharLabel.setText(result.getResult()[8]);
+											trustLabel.setText(result.getResult()[9]);
+											priceLabel.setText(result.getResult()[10]);
 											int indexOfLastAct = 0;
 											int startAddrIndex = 0;
-											for(int i = 8; i < result.getResult().length; i++)
+											for(int i = 11; i < result.getResult().length; i++)
 											{
 												if(result.getResult()[i].equals("<b>Post Sections Breakdown</b>"))
 												{

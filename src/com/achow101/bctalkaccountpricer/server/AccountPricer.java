@@ -51,7 +51,7 @@ public class AccountPricer {
 	public String[] getAccountData() {
 		
 		// Output stuff
-		String[] output = new String[9];
+		String[] output = new String[12];
 		
 		// Summary vars
 		String postsString = null;
@@ -406,7 +406,7 @@ public class AccountPricer {
 		int activity = Math.min(activityDetail.size() * 14, postcount);
 		
 		// Put detailed activity info into a string array
-		String[] activityBreakdown = new String[activityDetail.size() + 4];
+		String[] activityBreakdown = new String[activityDetail.size() + 1];
 		activityBreakdown[0] = "<b>Activity periods breakdown</b>";
 		for(int i = 1; i <= activityDetail.size(); i++)
 		{
@@ -452,10 +452,6 @@ public class AccountPricer {
 				nextPotRank = "Already the highest Rank";
 				break;
 		}
-		
-		activityBreakdown[activityBreakdown.length - 3] = "<b>Next Potential Rank: </b>" + nextPotRank;
-		activityBreakdown[activityBreakdown.length - 2] = "<b>Weeks to Next Potential Rank: </b>" + (int)(Math.ceil(potActToNext/7.0));
-		activityBreakdown[activityBreakdown.length - 1] = "<b>Potential Activity to next Potential Rank: </b>" + potActToNext;
 		
 		// Get post quality
 		double postRatio = (double)goodPosts / postcount;
@@ -513,10 +509,12 @@ public class AccountPricer {
 		output[2] = "Posts: " + postcount + ((merch) ? "+" : "");
 		output[3] = "Activity: " + activity + ((merch) ? "+" : "") + " (" + rank + ")";
 		output[4] = "Potential Activity: " + potActivity + ((merch) ? "+" : "") + " (Potential " + potRank + ")";
-		output[5] = "Post Quality: " + postQuality + " (" + new DecimalFormat("##.00").format(postRatio * 100) + "%)";
-		output[6] = "Average character count per post: " + (characters / postcount);
-		output[7] = "Trust: " + trust;
-		output[8] = "Estimated Price: " + dfmt.format(price);
+		output[5] = "\tWeeks to Next Potential Rank: " + (int)(Math.ceil(potActToNext/7.0));
+		output[6] = "\tPotential Activity to next Potential Rank: " + potActToNext;
+		output[7] = "Post Quality: " + postQuality + " (" + new DecimalFormat("##.00").format(postRatio * 100) + "%)";
+		output[8] = "Average character count per post: " + (characters / postcount);
+		output[9] = "Trust: " + trust;
+		output[10] = "Estimated Price: " + dfmt.format(price);
 		
 		// Combine output with activity breakdown
 		output = combineArrays(output, activityBreakdown);
