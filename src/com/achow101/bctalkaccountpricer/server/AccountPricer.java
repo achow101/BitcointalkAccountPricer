@@ -51,12 +51,13 @@ public class AccountPricer {
 	public String[] getAccountData() {
 		
 		// Output stuff
-		String[] output = new String[8];
+		String[] output = new String[9];
 		
 		// Summary vars
 		String postsString = null;
 		String username = null;
 		String rank = "";
+		long characters = 0;
 		
 		
 		while(true)
@@ -279,6 +280,7 @@ public class AccountPricer {
 							if (postString.length() >= 75)
 								goodPosts++;
 							postcount++;
+							characters += postString.length();
 						}
 						
 						// Get the post URL
@@ -512,8 +514,9 @@ public class AccountPricer {
 		output[3] = "Activity: " + activity + ((merch) ? "+" : "") + " (" + rank + ")";
 		output[4] = "Potential Activity: " + potActivity + ((merch) ? "+" : "") + " (Potential " + potRank + ")";
 		output[5] = "Post Quality: " + postQuality + " (" + new DecimalFormat("##.00").format(postRatio * 100) + "%)";
-		output[6] = "Trust: " + trust;
-		output[7] = "Estimated Price: " + dfmt.format(price);
+		output[6] = "Average character count per post: " + (characters / postcount);
+		output[7] = "Trust: " + trust;
+		output[8] = "Estimated Price: " + dfmt.format(price);
 		
 		// Combine output with activity breakdown
 		output = combineArrays(output, activityBreakdown);
