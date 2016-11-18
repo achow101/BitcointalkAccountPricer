@@ -277,7 +277,7 @@ public class AccountPricer {
 						
 						// Count the post
 						if(postIsCounted) {
-							if (postString.length() >= 75)
+							if (postString.replaceAll("\\s+","").length() >= 100)
 								goodPosts++;
 							postcount++;
 							characters += postString.length();
@@ -455,37 +455,6 @@ public class AccountPricer {
 		
 		// Get post quality
 		double postRatio = (double)goodPosts / postcount;
-		String postQuality = null;
-		
-		// Excellent
-		if(postRatio >= 0.90)
-		{
-			postQuality = "Excellent";
-		}
-		
-		// Good
-		else if(postRatio >= 0.80)
-		{
-			postQuality = "Good";
-		}
-		
-		// Fair
-		else if(postRatio >= 0.65)
-		{
-			postQuality = "Fair";
-		}
-		
-		// Poor
-		else if(postRatio >= 0.50)
-		{
-			postQuality = "Poor";
-		}
-		
-		// Very Poor
-		else if(postRatio < 0.50)
-		{
-			postQuality = "Very Poor";
-		}
 		
 		// Get price
 		double price = estimatePrice(activity, potActivity, postRatio, trustScore);
@@ -511,8 +480,6 @@ public class AccountPricer {
 		output[4] = "Potential Activity: " + potActivity + ((merch) ? "+" : "") + " (Potential " + potRank + ")";
 		output[5] = "\tWeeks to Next Potential Rank: " + (int)(Math.ceil(potActToNext/7.0));
 		output[6] = "\tPotential Activity to next Potential Rank: " + potActToNext;
-		output[7] = "Post Quality: " + postQuality + " (" + new DecimalFormat("##.00").format(postRatio * 100) + "%)";
-		output[8] = "Average character count per post: " + (characters / postcount);
 		output[9] = "Trust: " + trust;
 		output[10] = "Estimated Price: " + dfmt.format(price);
 		
@@ -534,24 +501,24 @@ public class AccountPricer {
 	
 	private double estimatePrice(int activity, int potentialActivity, double ratio, int trust)
 	{
-		double price = 0.0003 * activity;
+		double price = 0.0002 * activity;
 		
 		// Extra potential activity
 		int epa = potentialActivity - activity;
-		price += epa * 0.00015;
+		price += epa * 0.0001;
 		
 		// Post quality multipliers
 		
 		// Excellent
 		if(ratio >= 0.90)
 		{
-			price = price * 1.05;
+			price = price * 1.025;
 		}
 		
 		// Good
 		else if(ratio >= 0.80)
 		{
-			price = price * 1.025;
+			price = price * 1.0125;
 		}
 		
 		// Fair
@@ -563,13 +530,13 @@ public class AccountPricer {
 		// Poor
 		else if(ratio >= 0.50)
 		{
-			price = price * 0.975;
+			price = price * 0.95;
 		}
 		
 		// Very Poor
 		else if(ratio < 0.50)
 		{
-			price = price * 0.95;
+			price = price * 0.90;
 		}
 		
 		// Trust Multipliers		
