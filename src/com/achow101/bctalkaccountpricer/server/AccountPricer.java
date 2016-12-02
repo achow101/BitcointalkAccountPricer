@@ -57,12 +57,14 @@ public class AccountPricer {
 		String postsString = null;
 		String username = null;
 		String rank = "";
+		boolean smasBlacklisted = false;
 		long characters = 0;
 		
 		
 		while(true)
 		{
 			// Retrieve summary page
+			// Check SMAS blacklisting
 			try {
 				
 				// Wait a second to prevent ip bans
@@ -94,7 +96,16 @@ public class AccountPricer {
 					}
 					lastProfileElem = elem;
 				}
-				
+
+				Thread.sleep(1000);
+
+				// Grab the smas blacklist
+				Document smasBlacklistpost = Jsoup.connect("https://bitcointalk.org/index.php?topic=1545652.msg15536655#msg15536655").get();
+				Element smasBlacklistElem = smasBlacklistpost.select("table.bordercolor > tbody > tr " +
+						"> td > table > tbody > tr > td.windowbg2 > table > tbody > tr:nth-child(1) > td.td_headerandpost > div.post > div.code").first();
+				List<String> smasBlacklist = Arrays.asList(smasBlacklistElem.text().split(" "));
+				smasBlacklisted = smasBlacklist.contains(username);
+
 				break;
 				
 			} catch (Exception e) {
@@ -480,6 +491,7 @@ public class AccountPricer {
 		output[4] = "Potential Activity: " + potActivity + ((merch) ? "+" : "") + " (Potential " + potRank + ")";
 		output[5] = "\tWeeks to Next Potential Rank: " + (int)(Math.ceil(potActToNext/7.0));
 		output[6] = "\tPotential Activity to next Potential Rank: " + potActToNext;
+		output[7] = "SMAS Blacklisted: " + (smasBlacklisted ? "Yes" : "No");
 		output[9] = "Trust: " + trust;
 		output[10] = "Estimated Price: " + dfmt.format(price);
 		

@@ -78,6 +78,7 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 		final Label potActivityLabel = new Label();
 		final Label weeksToPotRankLabel = new Label();
 		final Label potActToPotRankLabel = new Label();
+		final Label smasBlacklistLabel = new Label();
 		final Label trustLabel = new Label();
 		final Label priceLabel = new Label();
 		final Label loadingLabel = new Label();
@@ -104,6 +105,7 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 		RootPanel.get("potActivityLabelContainer").add(potActivityLabel);
 		RootPanel.get("weeksToPotRankLabelContainer").add(weeksToPotRankLabel);
 		RootPanel.get("potActToPotRankLabelContainer").add(potActToPotRankLabel);
+		RootPanel.get("smasBlacklistContainer").add(smasBlacklistLabel);
 		RootPanel.get("trustLabelContainer").add(trustLabel);
 		RootPanel.get("priceLabelContainer").add(priceLabel);
 		RootPanel.get("loadingLabelContainer").add(loadingLabel);
@@ -173,6 +175,9 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 				tokenLabel.setText("");
 				estimateShareLabel.setText("");
 				reportTimeStamp.setText("");
+				smasBlacklistLabel.setText("");
+				weeksToPotRankLabel.setText("");
+				potActToPotRankLabel.setText("");
 				actTable.removeAllRows();
 				postsTable.removeAllRows();
 				addrTable.removeAllRows();
@@ -260,6 +265,7 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 											potActivityLabel.setText(result.getResult()[4]);
 											weeksToPotRankLabel.setText(result.getResult()[5]);
 											potActToPotRankLabel.setText(result.getResult()[6]);
+											smasBlacklistLabel.setText(result.getResult()[7]);
 											trustLabel.setText(result.getResult()[9]);
 											priceLabel.setText(result.getResult()[10]);
 											int indexOfLastAct = 0;
