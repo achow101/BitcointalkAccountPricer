@@ -28,6 +28,7 @@ import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.i18n.shared.DateTimeFormat;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlexTable;
@@ -240,6 +241,12 @@ public class Bitcointalk_Account_Pricer implements EntryPoint {
 									
 									else
 									{
+										// Redirect to token url if not already there.
+										if(Window.Location.getParameter("token") == null ||
+												!Window.Location.getParameter("token").contains(result.getToken()))
+										{
+											Window.Location.assign(url + result.getToken());
+										}
 										tokenLabel.setText("Your token is " + result.getToken());
 										estimateShareLabel.setHTML("Share this estimate: <a href=\"" + url + result.getToken() +
 												"\">" + url + result.getToken() + "</a>");
