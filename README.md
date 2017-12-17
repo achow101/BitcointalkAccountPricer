@@ -1,11 +1,11 @@
 # BitcointalkAccountPricer
 Price Estimator for Bitcointalk Forum Accounts
 
-##Introduction
+## Introduction
 This project is an attempt to provide accurate pricing information for the trading 
 of Bitcointalk Forum Accounts. It will be updated to reflect the market frequently.
 
-##Algorithm
+## Algorithm
 Below is the algorithm used to determine the price of an account
 
     0.0003 btc/activity
@@ -30,11 +30,11 @@ Below is the algorithm used to determine the price of an account
     neutral trust = 1.00 (+0%)
     negative trust = -0.15 (-85%)
     
-##Installing
+## Installing
 Installation instructiosn are coming soon. For now, you can either test this in eclipse or GWT Super Dev Mode. You can also compile and run
 yourself if you know how to deploy GWT RPC code.
 	
-##License
+## License
 Copyright (C) 2015  Andrew Chow
 
 This program is free software: you can redistribute it and/or modify
@@ -50,7 +50,7 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-##Disclaimer
+## Disclaimer
 Although I strive to produce accurate estimates, this estimator is by far not definitive. It may not 
 reflect what sellers are actually selling the accounts for. Furthermore, this estimator excludes specialty accounts
 such as Staff, Default Trust, and Satoshi.
